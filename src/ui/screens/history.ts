@@ -20,7 +20,7 @@ export class HistoryScreen extends Screen {
           <div class="panel">
             <h2 class="panel__title">Прогресс пуст</h2>
             <p class="panel__lead">Пройди первую тренировку — здесь появятся рекорды и история.</p>
-            <button class="btn btn--primary" data-dwell="h-back" data-action="back">К тренировкам</button>
+            <button class="btn btn--primary" data-action="back">К тренировкам</button>
           </div>
         </div>`;
     }
@@ -29,7 +29,7 @@ export class HistoryScreen extends Screen {
       <div class="screen screen--scroll history">
         <header class="results__head">
           <h2 class="results__title">Прогресс</h2>
-          <button class="btn btn--ghost" data-dwell="h-back" data-action="back">К тренировкам</button>
+          <button class="btn btn--ghost" data-action="back">К тренировкам</button>
         </header>
 
         <div class="stats">

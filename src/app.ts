@@ -3,7 +3,7 @@
  *
  * Порядок внутри кадра существенный:
  *   1) распознаём позу;
- *   2) считаем жесты и превращаем удержание кисти в обычный click по кнопке;
+ *   2) считаем два жеста подтверждения и паузы;
  *   3) отдаём кадр экрану — он обновляет свою логику и возвращает, что подсветить;
  *   4) только после этого рисуем скелет, чтобы подсветка соответствовала
  *      подсказке, которую экран показал в этом же кадре.
@@ -31,8 +31,13 @@ import { PreviewScreen } from './ui/screens/preview';
 import { WorkoutScreen } from './ui/screens/workout';
 import { ResultsScreen } from './ui/screens/results';
 import { HistoryScreen } from './ui/screens/history';
-import { HandsFreeControls, collectDwellTargets } from './ui/handsFree';
+import { HandsFreeControls } from './ui/handsFree';
+import { BottomNavigation } from './ui/navigation';
+import { SettingsScreen } from './ui/screens/settings';
 import { DemoSimulation } from './demo/simulation';
+import { Capacitor } from '@capacitor/core';
+import { App as NativeApp } from '@capacitor/app';
+import type { PluginListenerHandle } from '@capacitor/core';
 
 export interface AppElements {
   stage: HTMLElement;
@@ -57,10 +62,12 @@ export class App implements AppApi {
   private readonly probe = new BrightnessProbe();
   private readonly els: AppElements;
   private readonly handsFree: HandsFreeControls;
+  private readonly navigation: BottomNavigation;
   private readonly simulation = new DemoSimulation();
   private slowSince: number | null = null;
   private visionStartedAt = 0;
   private switchingModel = false;
+  private nativeStateListener: Promise<PluginListenerHandle> | null = null;
 
   private screen: Screen | null = null;
   private stream: MediaStream | null = null;
@@ -75,6 +82,7 @@ export class App implements AppApi {
 
   constructor(els: AppElements) {
     this.els = els;
+    this.navigation = new BottomNavigation(route => this.go(route));
     this.handsFree = new HandsFreeControls(els.ui, () => {
       if (this.switchingModel) return;
       this.switchingModel = true;
@@ -126,6 +134,12 @@ export class App implements AppApi {
   /** Запуск: показываем стартовый экран и включаем цикл отрисовки. */
   boot(): void {
     handleBackButton(() => this.goBack());
+    if (Capacitor.isNativePlatform()) {
+      this.nativeStateListener = NativeApp.addListener('appStateChange', ({ isActive }) => {
+        this.screen?.onVisibilityChange(!isActive, performance.now());
+        if (!isActive) this.coach.stop();
+      });
+    }
     this.go({ name: 'welcome' });
     this.loop(performance.now());
   }
@@ -136,12 +150,16 @@ export class App implements AppApi {
    * закрылось как обычно.
    */
   private goBack(): boolean {
+    if (this.screen?.onBack()) return true;
     switch (this.route.name) {
       case 'welcome':
-      case 'menu':
         return false;
+      case 'menu':
+        if (this.route.section !== 'exercises') return false;
+        this.go({ name: 'menu' });
+        return true;
       default:
-        this.go(this.visionReady ? { name: 'menu' } : { name: 'welcome' });
+        this.go({ name: 'menu' });
         return true;
     }
   }
@@ -151,7 +169,10 @@ export class App implements AppApi {
     // мы попадаем именно из него.
     this.sound.unlock();
 
+    if (kind === 'camera' && this.sourceKind === 'camera' && this.visionReady) return;
     if (kind === 'camera') {
+      stopCamera(this.stream);
+      this.stream = null;
       const started = await startCamera(this.video);
       this.stream = started.stream;
       try { await this.detector.load(loadPrefs().model, onProgress); }
@@ -199,7 +220,8 @@ export class App implements AppApi {
     else void this.wakeLock.release();
 
     this.route = route;
-    this.els.stage.classList.toggle('stage--browsing', route.name === 'menu' || route.name === 'preview');
+    this.els.stage.classList.toggle('stage--browsing', route.name !== 'workout' && route.name !== 'tutorial');
+    this.els.stage.dataset['route'] = route.name;
     this.screen?.unmount();
     this.gestures.clearCooldown();
     this.fx.clear();
@@ -209,11 +231,13 @@ export class App implements AppApi {
     host.className = 'screenhost';
     this.els.ui.appendChild(host);
     this.screen.mount(host);
+    this.navigation.update(route);
+    this.els.ui.append(this.handsFree.element, this.navigation.element);
     if (document.hidden) this.screen.onVisibilityChange(true, performance.now());
     if (this.sourceKind === 'demo' && route.name !== 'welcome') {
       const banner = document.createElement('aside');
       banner.className = 'source-banner';
-      banner.innerHTML = '<b>СИМУЛЯЦИЯ</b> · искусственные координаты, без камеры и MediaPipe. Управляй кнопками. <button>К камере</button>';
+      banner.innerHTML = '<span><b>СИМУЛЯЦИЯ</b> · без камеры и распознавания</span><button>К камере</button>';
       banner.querySelector('button')!.addEventListener('click', () => {
         this.visionReady = false;
         this.sourceKind = null;
@@ -228,6 +252,7 @@ export class App implements AppApi {
     cancelAnimationFrame(this.raf);
     stopCamera(this.stream);
     this.detector.close();
+    void this.nativeStateListener?.then(listener => listener.remove());
     void this.wakeLock.release();
   }
 
@@ -238,7 +263,9 @@ export class App implements AppApi {
       case 'tutorial':
         return new TutorialScreen(this);
       case 'menu':
-        return new MenuScreen(this);
+        return new MenuScreen(this, route.section);
+      case 'settings':
+        return new SettingsScreen(this);
       case 'preview':
         return new PreviewScreen(this, route.plan);
       case 'workout':
@@ -276,23 +303,9 @@ export class App implements AppApi {
     this.slowSince = slow ? this.slowSince ?? now : null;
     this.handsFree.performance(inferenceFps, this.fps,
       this.slowSince !== null && now - this.slowSince > 5000 && loadPrefs().model !== 'lite',
-      this.screen?.dwellEnabled ?? false, this.switchingModel);
+      this.screen?.canChangeModel ?? false, this.switchingModel);
 
-    const gesture = this.gestures.update(demo ? null : body, now, {
-      container: this.els.stage.getBoundingClientRect(),
-      targets: collectDwellTargets(this.els.ui),
-      mirrored: this.mirroredValue,
-      dwellEnabled: this.screen?.dwellEnabled ?? true,
-    });
-
-    // Жестовый выбор — это тот же click, что и мышью: у кнопки один обработчик.
-    if (gesture.activatedTargetId) {
-      const node = this.els.ui.querySelector<HTMLElement>(
-        `[data-dwell="${cssEscape(gesture.activatedTargetId)}"]`,
-      );
-      this.handsFree.accepted(node?.textContent?.trim().slice(0, 65) || 'Выбрано', now);
-      node?.click();
-    }
+    const gesture = this.gestures.update(demo ? null : body, now);
     if (gesture.fired) {
       this.handsFree.accepted(gesture.fired === 'confirm' ? 'Подтверждение' : 'Пауза / назад', now);
       this.screen?.onGesture(gesture.fired);
@@ -302,7 +315,7 @@ export class App implements AppApi {
     this.handsFree.update(gesture, this.screen, this.hasVision && !demo, now);
 
     // Слои рисуем в одном месте и в фиксированном порядке: подсказка
-    // кадрирования снизу, скелет поверх неё, курсор жестов сверху.
+    // кадрирования снизу, скелет поверх неё.
     this.overlay.clear();
 
     if (hints.guide && ready) {
@@ -331,8 +344,3 @@ export class App implements AppApi {
 }
 
 const EMPTY_SET = new Set<never>();
-
-/** Значения data-dwell мы задаём сами, но селектор всё равно экранируем. */
-function cssEscape(value: string): string {
-  return typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(value) : value.replace(/"/g, '\\"');
-}

@@ -1,13 +1,5 @@
-/**
- * Стартовый экран.
- *
- * Единственное место, где нужен настоящий клик: браузеры выдают доступ к камере
- * и звуку только по действию пользователя, жестом это обойти нельзя. Дальше всё
- * управление — телом.
- *
- * Здесь же индикатор загрузки. Модель и рантайм весят около 17 МБ, и без него
- * первые секунды выглядят как сломанная страница.
- */
+/** Стартовый экран: подключение камеры и звука по действию пользователя,
+ * прогресс загрузки модели, вход в симуляцию и библиотеку упражнений. */
 
 import { Screen } from '../../core/screen';
 import type { AppApi } from '../../core/screen';
@@ -23,6 +15,7 @@ const PHASE_LABEL: Record<LoadProgress['phase'], string> = {
 
 export class WelcomeScreen extends Screen {
   private busy = false;
+  private disposed = false;
 
   constructor(
     app: AppApi,
@@ -53,7 +46,7 @@ export class WelcomeScreen extends Screen {
           <ul class="bullets">
             <li><b>Считает повторения</b> и не засчитывает неполные</li>
             <li><b>Ловит ошибки техники</b> и говорит, что именно поправить</li>
-            <li><b>Управление телом</b> — клавиатура и мышь не нужны</li>
+            <li><b>Два простых жеста</b> — старт и пауза на расстоянии</li>
           </ul>
 
           ${this.error ? `<div class="alert alert--error">${esc(this.error)}</div>` : ''}
@@ -112,14 +105,18 @@ export class WelcomeScreen extends Screen {
     try {
       await this.app.startSource(kind, (p) => this.showProgress(p));
     } catch (err) {
+      if (this.disposed) return;
       this.busy = false;
       const message = err instanceof Error ? err.message : 'Не удалось запустить источник видео.';
       this.app.go({ name: 'welcome', error: message });
       return;
     }
 
+    if (this.disposed) return;
     this.app.go(kind === 'demo' || loadPrefs().tutorialDone ? { name: 'menu' } : { name: 'tutorial' });
   }
+
+  override unmount(): void { this.disposed = true; }
 
   private showProgress(p: LoadProgress): void {
     const pct = Math.round(p.ratio * 100);

@@ -20,6 +20,7 @@ import './styles/components.css';
 import './styles/screens.css';
 import './styles/guidance.css';
 import './styles/handsfree.css';
+import './styles/mobile.css';
 
 function need<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);

@@ -13,7 +13,7 @@ import type { GestureName } from '../../gestures/uiGestures';
 import { loadPrefs, savePrefs } from '../../storage/prefs';
 
 interface Lesson {
-  id: 'confirm' | 'cancel' | 'dwell';
+  id: 'confirm' | 'cancel';
   title: string;
   hint: string;
   icon: string;
@@ -32,12 +32,7 @@ const LESSONS: readonly Lesson[] = [
     hint: 'Скрести руки на груди',
     icon: '🙅',
   },
-  {
-    id: 'dwell',
-    title: 'Выбор кнопки',
-    hint: 'Наведи кисть на кнопку ниже и задержи, пока кольцо не заполнится',
-    icon: '👆',
-  },
+
 ];
 
 export class TutorialScreen extends Screen {
@@ -48,9 +43,9 @@ export class TutorialScreen extends Screen {
     return `
       <div class="screen screen--top tutorial">
         <div class="panel panel--wide">
-          <h2 class="panel__title">Управление телом</h2>
+          <p class="guide-eyebrow">Управление на расстоянии</p><h2 class="panel__title">Два простых жеста</h2>
           <p class="panel__lead">
-            Дальше мышь не понадобится. Выполни три жеста — на каждый система ответит.
+            Всего два жеста. Для выбора упражнений и разделов используй кнопки.
           </p>
 
           <ul class="lessons">
@@ -67,14 +62,8 @@ export class TutorialScreen extends Screen {
             ).join('')}
           </ul>
 
-          <div class="tutorial__target-wrap">
-            <button class="btn btn--dwell" data-dwell="tutorial-dwell" data-action="dwell">
-              Задержи здесь кисть
-            </button>
-          </div>
-
           <div class="row row--buttons">
-            <button class="btn btn--primary" data-dwell="tutorial-next" data-action="next">
+            <button class="btn btn--primary" data-action="next">
               К тренировкам
             </button>
             <button class="btn btn--link" data-action="skip">Пропустить обучение</button>
@@ -86,7 +75,6 @@ export class TutorialScreen extends Screen {
 
   protected override actions(): Record<string, () => void> {
     return {
-      dwell: () => this.complete('dwell'),
       next: () => this.leave(),
       skip: () => this.leave(),
     };
@@ -100,8 +88,8 @@ export class TutorialScreen extends Screen {
     this.setText(
       '.panel__lead',
       all
-        ? 'Готово. Подними руки над головой или задержи кисть на кнопке, чтобы перейти к тренировкам.'
-        : 'Дальше мышь не понадобится. Выполни три жеста — на каждый система ответит.',
+        ? 'Готово. Опусти руки, затем подними обе вверх или нажми «К тренировкам».'
+        : 'Всего два жеста. Для выбора упражнений и разделов используй кнопки.',
     );
 
     return { dim: false };

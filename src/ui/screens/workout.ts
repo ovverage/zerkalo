@@ -50,20 +50,16 @@ export class WorkoutScreen extends Screen {
     this.session = new WorkoutSession(plan);
   }
 
-  override get dwellEnabled(): boolean {
+  override get canChangeModel(): boolean {
     if (this.helpOpen) return true;
-    // Курсор — это кисть человека. Пока он встаёт перед камерой, ждёт отсчёта
-    // или выполняет упражнение, поднятая рука не означает «нажми кнопку»: так
-    // можно случайно завершить тренировку, ничего не сделав. Выбор кнопок
-    // удержанием работает только там, где человек действительно обращается к
-    // интерфейсу, — на паузе и на отдыхе. Мышью кнопки доступны всегда.
+    // Смену модели предлагаем на паузе, чтобы не обрывать измерение повтора.
     const state = this.session.currentState;
     return state === 'paused' || state === 'rest';
   }
 
   override get gestureHint(): string {
     if (this.helpOpen) return 'Руки крестом или обе вверх → закрыть помощь';
-    if (this.dwellEnabled) return 'Кисть → помощь или действие · обе руки вверх → продолжить';
+    if (this.canChangeModel) return 'Руки вверх — продолжить · руки крестом — пауза';
     return this.session.currentSpec?.view === 'side'
       ? 'Для паузы безопасно встань лицом к камере и скрести руки на груди'
       : 'Скрести руки на груди → пауза и помощь';
@@ -82,15 +78,9 @@ export class WorkoutScreen extends Screen {
               <div class="dots" data-el="dots"></div>
             </div>
           </div>
-          <div class="bar__right">
-            <button class="workout-help" data-dwell="w-help" data-action="help">▶ Как выполнять</button>
-            <button class="iconbtn" data-dwell="w-voice" data-action="voice" aria-label="Выключить голос" title="Выключить голос">🔊</button>
-            <button class="iconbtn" data-dwell="w-pause" data-action="pause" aria-label="Пауза" title="Пауза">⏸</button>
-            <button class="iconbtn" data-dwell="w-skip" data-action="skip" aria-label="Пропустить" title="Пропустить">⏭</button>
-            <button class="iconbtn iconbtn--danger" data-dwell="w-quit" data-action="quit" aria-label="Завершить" title="Завершить">⏹</button>
-          </div>
+          <div class="bar__right"><button class="iconbtn" data-action="voice" aria-label="Выключить голос" title="Выключить голос">🔊</button></div>
         </header>
-
+        <div class="workout__body">
         <div class="amp" data-el="amp">
           <div class="amp__track">
             <div class="amp__fill" data-el="ampFill"></div>
@@ -117,6 +107,12 @@ export class WorkoutScreen extends Screen {
         </div>
 
         <div class="stagepanel stagepanel--hidden" data-el="panel"></div>
+        </div>
+        <footer class="workout-actions" aria-label="Управление тренировкой">
+          <button data-action="help"><span aria-hidden="true">▷</span>Как выполнять</button>
+          <button class="workout-actions__primary" data-action="pause"><span data-el="pause-icon" aria-hidden="true">Ⅱ</span><b data-el="pause-label">Пауза</b></button>
+          <button data-action="quit"><span aria-hidden="true">□</span><b data-el="quit-label">Завершить</b></button>
+        </footer>
         <dialog class="guide-dialog" data-el="help" aria-labelledby="workout-guide-title"></dialog>
       </div>
     `;
@@ -157,6 +153,9 @@ export class WorkoutScreen extends Screen {
       return { hide: true };
     }
 
+    this.q('.workout')!.setAttribute('data-state', out.state);
+    this.setText('[data-el="pause-label"]', out.state === 'paused' ? 'Продолжить' : 'Пауза');
+    this.setText('[data-el="pause-icon"]', out.state === 'paused' ? '▷' : 'Ⅱ');
     const tracked = !out.framing.some((f) => f.severity === 'block');
     this.setText('[data-el="tracking"]', out.state === 'paused' || out.state === 'rest' ? ''
       : tracked ? '● Поза отслеживается' : '◌ Ищу рабочие суставы');
@@ -198,6 +197,14 @@ export class WorkoutScreen extends Screen {
     }
   }
 
+  override onBack(): boolean {
+    if (!this.started) { this.session.start(this.now); this.started = true; }
+    if (this.helpOpen) this.closeHelp();
+    else if (this.session.currentState !== 'paused') this.session.pause(this.now);
+    else this.confirmQuit();
+    return true;
+  }
+
   override unmount(): void {
     this.app.coach.stop();
     stopGuideVideos(this.root);
@@ -232,8 +239,8 @@ export class WorkoutScreen extends Screen {
     this.helpOpen = true;
     stopGuideVideos(this.root);
     dialog.innerHTML = `<header class="guide-dialog__head"><div><p class="guide-eyebrow">Тренировка на паузе</p><h2 id="workout-guide-title">${esc(spec.name)}</h2></div>
-      <button class="iconbtn" data-dwell="help-close-top" data-action="close-help" aria-label="Закрыть видеопоказ">✕</button></header>
-      ${guideContent(spec)}<footer class="guide-dialog__foot"><button class="btn btn--primary" data-dwell="help-close" data-action="close-help">${this.resumeAfterHelp ? 'Понятно, продолжить' : 'Вернуться к паузе'}</button></footer>`;
+      <button class="iconbtn" data-action="close-help" aria-label="Закрыть видеопоказ">✕</button></header>
+      ${guideContent(spec)}<footer class="guide-dialog__foot"><button class="btn btn--primary" data-action="close-help">${this.resumeAfterHelp ? 'Понятно, продолжить' : 'Вернуться к паузе'}</button></footer>`;
     dialog.showModal();
     playGuideVideos(dialog);
   }
@@ -423,8 +430,9 @@ export class WorkoutScreen extends Screen {
         <div class="stagepanel__inner">
           <h3 class="stagepanel__title">Пауза</h3>
           <p class="stagepanel__lead">Подними обе руки над головой, чтобы продолжить.</p>
-          <button class="btn btn--primary" data-dwell="w-resume" data-action="resume">Продолжить</button>
-          <button class="btn btn--ghost" data-dwell="paused-help" data-action="help">▶ Как выполнять</button>
+          <button class="btn btn--primary" data-action="resume">Продолжить</button>
+          <button class="btn btn--ghost" data-action="help">▶ Как выполнять</button>
+          <button class="btn btn--link" data-action="skip">Пропустить упражнение</button>
         </div>`;
     }
 
@@ -440,7 +448,7 @@ export class WorkoutScreen extends Screen {
           </p>
           ${guideVideo(spec)}
           <p class="stagepanel__note">Камера: ${esc(exerciseGuide(spec.id).camera.toLowerCase())}.</p>
-          <button class="btn btn--ghost" data-dwell="rest-help" data-action="help">Поза и настройка камеры</button>
+          <button class="btn btn--ghost" data-action="help">Поза и настройка камеры</button>
         </div>`;
     }
 
@@ -483,9 +491,6 @@ export class WorkoutScreen extends Screen {
             .join('')}
         </div>
 
-        <ol class="howto howto--inline">
-          ${spec.howTo.map((h) => `<li>${esc(h)}</li>`).join('')}
-        </ol>
       </div>`;
   }
 
@@ -556,7 +561,7 @@ export class WorkoutScreen extends Screen {
 
   /**
    * Завершение тренировки необратимо, а нажатие может прийти от неточного ввода
-   * — удержания кисти. Поэтому первое нажатие только спрашивает, и подтвердить
+   * — случайного касания. Поэтому первое нажатие только спрашивает, и подтвердить
    * нужно в течение нескольких секунд.
    */
   private confirmQuit(): void {
@@ -569,11 +574,13 @@ export class WorkoutScreen extends Screen {
     }
 
     this.quitAskedAt = now;
+    this.setText('[data-el="quit-label"]', 'Ещё раз?');
     if (button) {
       button.classList.add('iconbtn--asking');
       button.setAttribute('title', 'Нажми ещё раз, чтобы завершить');
       window.setTimeout(() => {
         button.classList.remove('iconbtn--asking');
+        this.setText('[data-el="quit-label"]', 'Завершить');
         button.setAttribute('title', 'Завершить');
       }, QUIT_CONFIRM_MS);
     }

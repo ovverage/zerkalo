@@ -10,7 +10,6 @@ import type { Body, LandmarkName } from '../vision/landmarks';
 import { LANDMARK_INDEX, SKELETON_EDGES } from '../vision/landmarks';
 import type { Box } from '../vision/framing';
 import { containTransform } from '../vision/viewport';
-import type { CursorPoint } from '../gestures/uiGestures';
 
 export interface DrawOptions {
   /** Видео отражено по горизонтали. */
@@ -150,34 +149,7 @@ export class SkeletonOverlay {
   /** Зеркалить ли рамку найденного человека — задаётся перед drawGuide. */
   mirroredBox = true;
 
-  /** Курсор жестового управления: точка и кольцо удержания. */
-  drawCursor(cursor: CursorPoint, dwell: number, active: boolean): void {
-    const { ctx } = this;
-    const r = Math.max(14, Math.min(this.width, this.height) * 0.024);
 
-    ctx.beginPath();
-    ctx.fillStyle = active ? 'rgba(126, 249, 172, 0.95)' : 'rgba(255, 255, 255, 0.9)';
-    ctx.shadowColor = active ? 'rgba(126, 249, 172, 0.9)' : 'rgba(255,255,255,0.6)';
-    ctx.shadowBlur = 16;
-    ctx.arc(cursor.x, cursor.y, r * 0.34, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    ctx.beginPath();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-    ctx.lineWidth = 3;
-    ctx.arc(cursor.x, cursor.y, r, 0, Math.PI * 2);
-    ctx.stroke();
-
-    if (dwell > 0.001) {
-      ctx.beginPath();
-      ctx.strokeStyle = '#7ef9ac';
-      ctx.lineWidth = 4;
-      ctx.lineCap = 'round';
-      ctx.arc(cursor.x, cursor.y, r, -Math.PI / 2, -Math.PI / 2 + dwell * Math.PI * 2);
-      ctx.stroke();
-    }
-  }
 }
 
 /** Точки лица, кроме носа, только засоряют картинку. */

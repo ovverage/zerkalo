@@ -17,7 +17,7 @@ export class PreviewScreen extends Screen {
   protected override template(): string {
     return `<div class="screen screen--scroll preview">
       <header class="preview__head">
-        <button class="btn btn--ghost" data-action="back" data-dwell="preview-back">← Упражнения</button>
+        <button class="btn btn--ghost" data-action="back">← ${this.plan.id.startsWith('single-') ? 'Упражнения' : 'Тренировки'}</button>
         <span class="preview__quiet">Без звука · в твоём темпе</span>
       </header>
       <div class="preview__title"><p class="guide-eyebrow">${this.plan.steps.length > 1 || this.plan.durationSec ? esc(this.plan.name) : 'Перед началом'}</p>
@@ -25,10 +25,10 @@ export class PreviewScreen extends Screen {
       ${this.plan.durationSec ? '<p class="alert alert--good">75 секунд в удобном темпе. Выполняй движение как обычно; намеренные ошибки не нужны. Если отклонение возникнет, исправь его по одной подсказке. Если ошибок нет — это хороший результат.</p>' : ''}
       <p class="preview-readiness" data-el="readiness" role="status"></p>
       ${this.plan.steps.length > 1 ? `<nav class="preview__steps" aria-label="Упражнения программы">${this.plan.steps.map((step, i) =>
-        `<button class="toggle" data-action="step-${i}" data-dwell="preview-step-${i}" aria-pressed="${i === 0}">${i + 1}. ${esc(requireExercise(step.exerciseId).short)}</button>`).join('')}</nav>` : ''}
+        `<button class="toggle" data-action="step-${i}" aria-pressed="${i === 0}">${i + 1}. ${esc(requireExercise(step.exerciseId).short)}</button>`).join('')}</nav>` : ''}
       <div data-el="guide"></div>
       <footer class="preview__foot"><p>Тренер озвучивает важные ошибки с паузой от 10 секунд.<br><span>Повтор одной ошибки — не чаще раза в 30 секунд.</span></p>
-        <button class="btn btn--primary" data-action="start" data-dwell="preview-start">${this.startLabel()}</button>
+        <button class="btn btn--primary" data-action="start">${this.startLabel()}</button>
         <p class="preview__error" data-el="error" role="status" hidden></p>
       </footer>
     </div>`;
@@ -36,7 +36,7 @@ export class PreviewScreen extends Screen {
 
   protected override actions(): Record<string, () => void> {
     const actions: Record<string, () => void> = {
-      back: () => { if (!this.busy) this.app.go({ name: 'menu' }); },
+      back: () => { this.onBack(); },
       start: () => void this.start(),
     };
     this.plan.steps.forEach((_, i) => { actions[`step-${i}`] = () => { this.index = i; this.renderGuide(); }; });
@@ -56,7 +56,11 @@ export class PreviewScreen extends Screen {
   }
   override onGesture(gesture: GestureName): void {
     if (gesture === 'confirm' && this.app.hasVision) void this.start();
-    if (gesture === 'cancel' && !this.busy) this.app.go({ name: 'menu' });
+    if (gesture === 'cancel') this.onBack();
+  }
+  override onBack(): boolean {
+    if (!this.busy) this.app.go({ name: 'menu', section: this.plan.id.startsWith('single-') ? 'exercises' : 'programs' });
+    return true;
   }
   override unmount(): void { this.disposed = true; stopGuideVideos(this.root); }
 

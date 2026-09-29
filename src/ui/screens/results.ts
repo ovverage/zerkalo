@@ -64,9 +64,9 @@ export class ResultsScreen extends Screen {
         ${this.mistakesHtml()}
 
         <div class="row row--buttons">
-          <button class="btn btn--primary" data-dwell="r-again" data-action="again">Ещё раз</button>
-          <button class="btn btn--ghost" data-dwell="r-menu" data-action="menu">К тренировкам</button>
-          <button class="btn btn--link" data-dwell="r-history" data-action="history">Прогресс</button>
+          <button class="btn btn--primary" data-action="again">Ещё раз</button>
+          <button class="btn btn--ghost" data-action="menu">К тренировкам</button>
+          <button class="btn btn--link" data-action="history">Прогресс</button>
         </div>
         <p class="note">Подними руки над головой, чтобы повторить тренировку.</p>
       </div>

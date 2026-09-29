@@ -18,6 +18,9 @@ const config: CapacitorConfig = {
     // Без этого WebView считает содержимое небезопасным и блокирует камеру.
     allowMixedContent: false,
   },
+  plugins: {
+    SystemBars: { style: 'DARK', insetsHandling: 'css', initialViewportFitValueHint: 'cover' },
+  },
   server: {
     androidScheme: 'https',
   },

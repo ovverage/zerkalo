@@ -1,4 +1,5 @@
 /** Доступ к камере с разбором причин отказа — пользователю нужен точный совет. */
+import { Capacitor } from '@capacitor/core';
 
 export type CameraFailure =
   | 'denied'
@@ -69,7 +70,11 @@ export async function startCamera(video: HTMLVideoElement): Promise<CameraStart>
     ]).finally(() => clearTimeout(timer));
   } catch (err) {
     if (err instanceof CameraError) throw err;
-    throw new CameraError(classify(err), MESSAGES[classify(err)]);
+    const reason = classify(err);
+    const message = reason === 'denied' && Capacitor.getPlatform() === 'android'
+      ? 'Нет доступа к камере. Открой настройки Android → Приложения → Зеркало → Разрешения → Камера, затем попробуй снова.'
+      : MESSAGES[reason];
+    throw new CameraError(reason, message);
   }
 
   video.srcObject = stream;

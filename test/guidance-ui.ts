@@ -5,6 +5,7 @@ import '../src/styles/components.css';
 import '../src/styles/screens.css';
 import '../src/styles/guidance.css';
 import '../src/styles/handsfree.css';
+import '../src/styles/mobile.css';
 import { MenuScreen } from '../src/ui/screens/menu';
 import { PreviewScreen } from '../src/ui/screens/preview';
 import { WorkoutScreen } from '../src/ui/screens/workout';

@@ -92,14 +92,6 @@
   color: var(--bad);
 }
 
-.btn--dwell {
-  padding: 22px 34px;
-  font-size: 17px;
-  border-style: dashed;
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
 /* Пульсация подсказывает, что кнопка ждёт жеста. */
 .btn--pulse {
   animation: pulse 1.5s ease-in-out infinite;

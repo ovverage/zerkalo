@@ -5,9 +5,6 @@
  * убирает циклическую зависимость и заодно ограничивает то, что экран может
  * сделать с приложением.
  *
- * Ключевое решение: жестовый выбор превращается в обычный click по элементу с
- * атрибутом data-dwell. Поэтому у кнопок один обработчик на оба способа ввода —
- * жест и мышь, — и любая кнопка автоматически доступна с камеры.
  */
 
 import type { Body, LandmarkName } from '../vision/landmarks';
@@ -25,7 +22,8 @@ import type { WorkoutPlan } from '../exercises/registry';
 export type Route =
   | { name: 'welcome'; error?: string }
   | { name: 'tutorial' }
-  | { name: 'menu' }
+  | { name: 'menu'; section?: 'programs' | 'exercises' }
+  | { name: 'settings' }
   | { name: 'preview'; plan: WorkoutPlan }
   | { name: 'workout'; plan: WorkoutPlan }
   | { name: 'results'; result: SessionResult; records: readonly NewRecord[] }
@@ -76,17 +74,10 @@ export abstract class Screen {
   protected root!: HTMLElement;
   get demoMotion(): import('../demo/simulation').DemoMotion | null { return null; }
 
-  /**
-   * Разрешён ли выбор кнопок удержанием кисти. Во время упражнения его нужно
-   * выключать: поднятая рука — часть движения, а не попытка нажать кнопку.
-   */
-  get dwellEnabled(): boolean {
-    return true;
-  }
-
-  get gestureHint(): string {
-    return 'Кисть → выбор · обе руки вверх → подтвердить · руки крестом → назад';
-  }
+  /** Модель можно менять только вне активного движения. */
+  get canChangeModel(): boolean { return true; }
+  get gestureHint(): string { return 'Руки вверх — старт · руки крестом — назад'; }
+  onBack(): boolean { return false; }
 
   constructor(protected readonly app: AppApi) {}
 

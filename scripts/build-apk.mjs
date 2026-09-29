@@ -4,7 +4,7 @@
  * Отдельный скрипт, а не строчка в package.json, из-за двух вещей, о которые
  * спотыкается любой, кто собирает проект впервые:
  *
- *  1. Android Gradle Plugin работает только с JDK 17–21. На машине обычно стоит
+ *  1. Текущий проект с Capacitor 8 собирается с JDK 21. На машине обычно стоит
  *     более новый JDK, и Gradle падает с невнятной ошибкой про версию класса.
  *     Здесь мы явно ищем подходящий и говорим, если его нет.
  *  2. Gradle нужен путь к Android SDK. Ищем его в привычных местах и пишем в
@@ -21,8 +21,8 @@ const ANDROID_DIR = 'android';
 const APK_SOURCE = join(ANDROID_DIR, 'app/build/outputs/apk/debug/app-debug.apk');
 const APK_TARGET = 'dist/zerkalo.apk';
 
-/** AGP 8.x отказывается работать вне этого диапазона. */
-const JDK_MIN = 17;
+/** Capacitor 8 компилирует Java с sourceCompatibility VERSION_21. */
+const JDK_MIN = 21;
 const JDK_MAX = 21;
 
 const exists = (path) =>
