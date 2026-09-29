@@ -192,6 +192,8 @@ npm run verify:release
 
 `verify:release` проверяет модели по SHA-256, runtime, медиаматериалы, ссылки ресурсов и отсутствие исходников, тестов и локальных секретов. Для ZIP нужна системная утилита `zip` (самому хостингу достаточно каталога `dist/`). Готовый архив формируется командой `npm run package:web` в `release/zerkalo-web.zip`. CI проверяет сборку, но **ничего не публикует**. Изменение приватности репозитория и публичное размещение требуют отдельного решения владельца.
 
+Для GitHub Pages подготовлен **неактивный** [шаблон публикации](docs/pages-workflow.yml.example), по [официальной инструкции GitHub](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages). После разрешения владельца: перенести его в `.github/workflows/pages.yml`, включить источник Pages «GitHub Actions» и запустить вручную на `main`. Он повторяет проверки и загружает только `dist/`; обычный push сайт не публикует. До успешного размещения публичная ссылка не заявляется.
+
 ## Android (дополнительно)
 
 Основная сдача — браузер. Для Android нужны JDK 21, Android SDK API 36 и Node.js 22+:
