@@ -5,7 +5,6 @@
 
 import { Screen } from '../../core/screen';
 import type { DrawHints } from '../../core/screen';
-import type { GestureName } from '../../gestures/uiGestures';
 import { dateLabel, duration, esc, plural, qualityTone } from '../../core/dom';
 
 export class HistoryScreen extends Screen {
@@ -121,7 +120,4 @@ export class HistoryScreen extends Screen {
     return { hide: true };
   }
 
-  override onGesture(gesture: GestureName): void {
-    if (gesture === 'confirm' || gesture === 'cancel') this.app.go({ name: 'menu' });
-  }
 }

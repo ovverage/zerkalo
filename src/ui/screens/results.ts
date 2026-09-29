@@ -68,7 +68,7 @@ export class ResultsScreen extends Screen {
           <button class="btn btn--ghost" data-action="menu">К тренировкам</button>
           <button class="btn btn--link" data-action="history">Прогресс</button>
         </div>
-        <p class="note">Подними руки над головой, чтобы повторить тренировку.</p>
+        <p class="note">Скрести руки, чтобы повторить тренировку.</p>
       </div>
     `;
   }
@@ -94,9 +94,9 @@ export class ResultsScreen extends Screen {
     return { hide: true };
   }
 
+  override get gestureHint(): string { return 'Крест — повторить'; }
   override onGesture(gesture: GestureName): void {
-    if (gesture === 'confirm') this.again();
-    if (gesture === 'cancel') this.app.go({ name: 'menu' });
+    if (gesture === 'cross') this.again();
   }
 
   private again(): void {

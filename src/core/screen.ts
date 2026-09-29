@@ -76,7 +76,7 @@ export abstract class Screen {
 
   /** Модель можно менять только вне активного движения. */
   get canChangeModel(): boolean { return true; }
-  get gestureHint(): string { return 'Руки вверх — старт · руки крестом — назад'; }
+  get gestureHint(): string { return ''; }
   onBack(): boolean { return false; }
 
   constructor(protected readonly app: AppApi) {}

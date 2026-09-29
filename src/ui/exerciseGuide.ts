@@ -19,7 +19,6 @@ export function guideContent(spec: ExerciseSpec): string {
   return `<div class="exercise-guide">
     <div class="exercise-guide__visual">
       ${guideVideo(spec)}
-      <div class="guide-freedom"><span aria-hidden="true">↔</span><p>Можно в любой части кадра.<br><span>Главное — видимость рабочих суставов.</span></p></div>
     </div>
     <div class="exercise-guide__details">
       <p class="guide-eyebrow">${GROUP_LABEL[spec.group]} · ${spec.mode === 'hold' ? 'Удержание позы' : 'Повторения'}</p>

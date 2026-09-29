@@ -3,7 +3,7 @@
  *
  * Порядок внутри кадра существенный:
  *   1) распознаём позу;
- *   2) считаем два жеста подтверждения и паузы;
+ *   2) проверяем жест скрещённых рук;
  *   3) отдаём кадр экрану — он обновляет свою логику и возвращает, что подсветить;
  *   4) только после этого рисуем скелет, чтобы подсветка соответствовала
  *      подсказке, которую экран показал в этом же кадре.
@@ -307,7 +307,7 @@ export class App implements AppApi {
 
     const gesture = this.gestures.update(demo ? null : body, now);
     if (gesture.fired) {
-      this.handsFree.accepted(gesture.fired === 'confirm' ? 'Подтверждение' : 'Пауза / назад', now);
+      this.handsFree.accepted('Крест принят', now);
       this.screen?.onGesture(gesture.fired);
     }
 

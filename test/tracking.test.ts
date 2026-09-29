@@ -148,7 +148,7 @@ test('низкая достоверность во время выполнени
   let out;
   for (let i = 0; i < 100; i++) out = h.tick(pose({ bend: 42 * Math.sin(i / 10) ** 2, visibility: 0.2 }));
   assert.equal(out?.done, 0);
-  assert.match(out?.message?.hint ?? '', /Не удаётся отследить/);
+  assert.match(out?.message?.hint ?? '', /Покажи камере.*колени/);
 });
 
 test('один кадр модели не добавляет время планки при повторной отрисовке', () => {

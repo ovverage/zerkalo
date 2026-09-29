@@ -21,7 +21,7 @@ export class PreviewScreen extends Screen {
         <span class="preview__quiet">Без звука · в твоём темпе</span>
       </header>
       <div class="preview__title"><p class="guide-eyebrow">${this.plan.steps.length > 1 || this.plan.durationSec ? esc(this.plan.name) : 'Перед началом'}</p>
-        <h2 data-el="title"></h2><p>Посмотри движение и подготовь камеру. Старт — когда будешь готов.</p></div>
+        <h2 data-el="title"></h2><p>Посмотри технику. Для старта скрести руки или нажми кнопку.</p></div>
       ${this.plan.durationSec ? '<p class="alert alert--good">75 секунд в удобном темпе. Выполняй движение как обычно; намеренные ошибки не нужны. Если отклонение возникнет, исправь его по одной подсказке. Если ошибок нет — это хороший результат.</p>' : ''}
       <p class="preview-readiness" data-el="readiness" role="status"></p>
       ${this.plan.steps.length > 1 ? `<nav class="preview__steps" aria-label="Упражнения программы">${this.plan.steps.map((step, i) =>
@@ -51,12 +51,12 @@ export class PreviewScreen extends Screen {
     const position = frame.body && spec.inPosition && !spec.inPosition(spec.metrics(frame.body)) ? spec.positionHint : null;
     this.setText('[data-el="readiness"]', this.app.source === 'demo' ? '◉ Готова симуляция. Координаты заданы сценарием; это не проверка камеры.'
       : !this.app.hasVision ? 'Камера ещё не включена. Разреши доступ при старте.'
-      : issue ? `◌ ${issue.hint}` : position ? `◌ ${position}` : '✓ Рабочие суставы видны. Можно начинать.');
+      : issue ? `◌ ${issue.hint}` : position ? `◌ ${position}` : '✓ Можно начинать.');
     return { hide: true };
   }
+  override get gestureHint(): string { return 'Крест — начать'; }
   override onGesture(gesture: GestureName): void {
-    if (gesture === 'confirm' && this.app.hasVision) void this.start();
-    if (gesture === 'cancel') this.onBack();
+    if (gesture === 'cross' && this.app.hasVision) void this.start();
   }
   override onBack(): boolean {
     if (!this.busy) this.app.go({ name: 'menu', section: this.plan.id.startsWith('single-') ? 'exercises' : 'programs' });

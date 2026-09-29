@@ -1,4 +1,4 @@
-/** Integration: two gestures + touch navigation, real screens and workout engine. */
+/** Integration: one cross gesture + touch navigation, real screens and workout engine. */
 import '../src/styles/base.css'; import '../src/styles/layout.css'; import '../src/styles/components.css';
 import '../src/styles/screens.css'; import '../src/styles/guidance.css'; import '../src/styles/handsfree.css'; import '../src/styles/mobile.css';
 import { TutorialScreen } from '../src/ui/screens/tutorial';
@@ -59,7 +59,7 @@ function crossed(): Body {
   b.world[I.left_wrist] = { x: -.16, y: -.34, z: -.06 }; b.world[I.right_wrist] = { x: .16, y: -.34, z: -.06 };
   return b;
 }
-function gesture(kind: 'confirm' | 'cancel', frames = 30) { neutral(); feed(kind === 'confirm' ? pose({ armElevation: 180 }) : crossed(), frames); }
+function gesture(frames = 30) { neutral(); feed(crossed(), frames); }
 const paint = () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
 async function tap(selector: string) {
   const button = ui.querySelector<HTMLElement>(selector);
@@ -76,11 +76,12 @@ function layout(label: string) {
 }
 async function run() {
   app.go({ name: 'tutorial' }); await paint(); tick(pose());
-  expect(ui.querySelectorAll('.lesson').length === 2 && !ui.querySelector('[data-action="dwell"]'), 'ровно два урока, задания с ладонью нет');
-  gesture('confirm'); gesture('cancel');
-  expect(ui.querySelectorAll('.lesson--done').length === 2, 'два жеста засчитываются');
-  gesture('confirm', 120); await paint();
+  expect(ui.querySelectorAll('.lesson').length === 1 && !ui.querySelector('[data-action="dwell"]'), 'один урок креста, задания с ладонью нет');
+  gesture();
+  expect(ui.querySelectorAll('.lesson--done').length === 1, 'крест засчитывается');
+  gesture(120); await paint();
   expect(route.name === 'menu', 'удержание подтверждения не проскакивает меню');
+  expect(!ui.textContent?.includes('Камера подключена'), 'на главной нет статуса камеры');
   layout('Тренировки');
   await tap('[data-tab="exercises"]');
   expect(ui.querySelectorAll('.chip').length === 11, 'все 11 упражнений доступны в отдельной вкладке');
@@ -91,15 +92,20 @@ async function run() {
   expect(!!ui.querySelector('[data-tab="exercises"][aria-current="page"]'), 'назад из видеопоказа возвращает во вкладку упражнений');
   await tap('[data-action="ex-push-up"]');
   await tap('[data-action="start"]');
+  feed(null, 20); await paint();
+  const setup = ui.querySelector<HTMLElement>('.setup--compact')!;
+  expect(setup.getBoundingClientRect().height <= Math.min(128, innerHeight / 4), 'подготовка занимает не больше четверти экрана');
+  expect(setup.textContent?.includes('Встань в кадр.') && !setup.textContent?.includes('любой части'), 'при поиске позы одна короткая подсказка');
+  if (new URLSearchParams(location.search).has('setup')) { report.hidden = true; return; }
   feed(pose({ prone: true, armElevation: 90, elbowBend: 172 }), 160);
   expect(route.name === 'workout', 'боковое упражнение запущено');
-  gesture('cancel'); await paint();
+  gesture(); await paint();
   expect(screen.canChangeModel && ui.textContent?.includes('Пауза'), 'из боковой позы можно встать и поставить паузу крестом');
   const actions = ui.querySelector('.workout-actions')!.getBoundingClientRect();
   expect(actions.bottom <= innerHeight && actions.top > 0, 'нижние кнопки тренировки видны');
   await tap('.workout-actions [data-action="help"]');
   expect(!!ui.querySelector('dialog[open]'), 'видеопомощь открывается');
-  gesture('cancel'); await paint();
+  gesture(); await paint();
   expect(!ui.querySelector('dialog[open]'), 'крест закрывает помощь');
   expect(screen.onBack(), 'системный «назад» обрабатывается тренировкой');
   app.go({ name: 'menu' }); await paint(); tick(pose());
@@ -107,21 +113,25 @@ async function run() {
   expect(!!ui.querySelector('[role="switch"]'), 'настройки вынесены в отдельный экран');
   await tap('[data-tab="history"]'); layout('Прогресс');
   await tap('[data-tab="programs"]'); await tap('[data-action="workout-motion"]');
-  gesture('confirm'); await paint(); feed(pose(), 160);
-  expect(!screen.canChangeModel, 'старт руками вверх');
-  screen.onBack(); tick(pose());
-  expect(screen.canChangeModel && ui.textContent?.includes('Пауза'), 'системный «назад» ставит паузу, не теряя тренировку');
-  gesture('confirm'); feed(pose(), 160);
+  gesture(); await paint(); feed(pose(), 160);
+  expect(!screen.canChangeModel, 'старт крестом');
+  neutral(); feed(pose({ armElevation: 180 }), 90);
+  expect(!screen.canChangeModel, 'поднятые руки не останавливают тренировку');
+  gesture(); tick(pose());
+  expect(screen.canChangeModel && ui.textContent?.includes('Пауза'), 'крест ставит паузу, не теряя тренировку');
+  neutral(); feed(pose({ armElevation: 180 }), 90);
+  expect(screen.canChangeModel, 'поднятые руки не снимают паузу');
+  gesture(); feed(pose(), 160);
   screen.onVisibilityChange(true, t + 50); t += 60000; screen.onVisibilityChange(false, t); tick(pose());
   expect(screen.canChangeModel, 'после сворачивания остаётся пауза');
-  gesture('confirm'); feed(pose(), 160);
+  gesture(); feed(pose(), 160);
   const demo = new DemoSimulation();
   for (let i = 0; i < 4000 && route.name !== 'results'; i++) {
     tick(demo.frame(t + 1000 / 30, screen.demoMotion));
     if (i % 100 === 0) await paint();
   }
   expect(route.name === 'results' && saved.length === 1, 'три движения → результат и сохранение'); layout('Итоги');
-  gesture('confirm'); await paint();
+  gesture(); await paint();
   expect(route.name === 'preview', 'повторная тренировка начинается с видеопоказа');
   expect(!document.querySelector('.hand-cursor'), 'курсора ладони нет на всём маршруте');
   report.textContent += `\nPASS · ${innerWidth}×${innerHeight}${location.search ? ' · insets 24/24' : ''}\n${trail.join(' → ')}`;

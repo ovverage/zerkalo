@@ -49,7 +49,7 @@ export function checkFraming(
   if (brightness !== null && brightness < 0.16) {
     issues.push({
       code: 'dark',
-      hint: 'Слишком темно — включи свет или встань лицом к окну, иначе камера не видит контуры.',
+      hint: 'Мало света. Включи свет или повернись к окну.',
       severity: 'warn',
     });
   }
@@ -57,7 +57,7 @@ export function checkFraming(
   if (!body) {
     issues.push({
       code: 'no-pose',
-      hint: 'Покажись в любой части кадра. Для упражнения должны быть видны рабочие суставы; камера найдёт тебя автоматически.',
+      hint: 'Встань в кадр.',
       severity: 'block',
     });
     return issues;
@@ -68,12 +68,12 @@ export function checkFraming(
     const hidden = new Set(observation.missing.map((name) => PART_LABEL[name]).filter(Boolean));
     issues.push({
       code: 'partial',
-      hint: `Не удаётся отследить ${[...hidden].join(' и ') || 'суставы'}. Покажи их камере или немного измени ракурс. В центре стоять не нужно.`,
+      hint: `Покажи камере ${[...hidden].join(', ') || 'суставы'}.`,
       severity: 'block',
     });
   }
   if (observation.ok && tracking === 'either-side' && !observe(body, required, 'all').ok) {
-    issues.push({ code: 'one-side', severity: 'warn', hint: 'Видна одна сторона: считаю амплитуду. Сравнить симметрию сейчас нельзя.' });
+    issues.push({ code: 'one-side', severity: 'warn', hint: 'Видна одна сторона. Симметрия не оценивается.' });
   }
   const box = boundingBox(body);
   if (observation.ok && Math.max(box.width, box.height) < 0.22) {
@@ -84,7 +84,7 @@ export function checkFraming(
   if (tracking !== 'either-side' && view === 'front' && facing < 0.35) {
     issues.push({
       code: 'turn-front',
-      hint: 'Повернись лицом к камере: в профиль нельзя надёжно сравнить обе руки и ширину шага. Счёт приостановлен.',
+      hint: 'Повернись лицом к камере.',
       severity: 'block',
     });
   }

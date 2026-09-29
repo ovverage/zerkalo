@@ -40,13 +40,13 @@ export class WelcomeScreen extends Screen {
         <div class="panel panel--wide welcome__panel">
           <div class="brand">
             <h1 class="brand__name">Зеркало</h1>
-            <p class="brand__tag">Фитнес-тренер, который видит технику</p>
+            <p class="brand__tag">Тренировки с проверкой техники</p>
           </div>
 
           <ul class="bullets">
             <li><b>Считает повторения</b> и не засчитывает неполные</li>
-            <li><b>Ловит ошибки техники</b> и говорит, что именно поправить</li>
-            <li><b>Два простых жеста</b> — старт и пауза на расстоянии</li>
+            <li><b>Подсказывает по технике</b> во время упражнения</li>
+            <li><b>Скрести руки</b> для старта или паузы</li>
           </ul>
 
           ${this.error ? `<div class="alert alert--error">${esc(this.error)}</div>` : ''}
@@ -66,11 +66,11 @@ export class WelcomeScreen extends Screen {
           </div>
 
           <p class="note">
-            Видео обрабатывается прямо в браузере и никуда не отправляется.
+            Видео остаётся на устройстве.
             ${
               totals.sessions > 0
                 ? `Уже пройдено тренировок: <b>${totals.sessions}</b>.`
-                : 'Можно находиться в любой части кадра — главное, чтобы были видны рабочие суставы.'
+                : 'Для тренировки нужен доступ к камере.'
             }
           </p>
 
@@ -91,7 +91,7 @@ export class WelcomeScreen extends Screen {
       camera: () => void this.begin('camera'),
       demo: () => void this.begin('demo'),
       history: () => this.app.go({ name: 'history' }),
-      exercises: () => { if (!this.busy) this.app.go({ name: 'menu' }); },
+      exercises: () => { if (!this.busy) this.app.go({ name: 'menu', section: 'exercises' }); },
     };
   }
 

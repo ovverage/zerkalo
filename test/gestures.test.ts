@@ -10,7 +10,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { GestureEngine, isArmsCrossed, isHandsUp } from '../src/gestures/uiGestures';
+import { GestureEngine, isArmsCrossed } from '../src/gestures/uiGestures';
 import type { GestureName } from '../src/gestures/uiGestures';
 import { bendFor, pose } from './synthetic';
 import type { PoseParams } from './synthetic';
@@ -53,39 +53,36 @@ test('jumping jacks не пропускают упражнение случай�
   }
 
   const { events } = fired(frames);
-  // Руки действительно поднимаются над головой, поэтому «подтверждение» здесь
-  // сработать может — но оно ничего не ломает: во время упражнения экран его
-  // игнорирует, а на паузе оно означает «продолжить».
-  assert.ok(
-    events.every((e) => e === 'confirm'),
-    `других жестов быть не должно: ${events.join(', ')}`,
-  );
+  assert.deepEqual(events, []);
 });
 
-test('осознанные жесты распознаются', () => {
-  const up = pose({ armElevation: 180 });
-  assert.equal(isHandsUp(up), true, 'руки над головой');
-
-  const standing = pose();
-  assert.equal(isHandsUp(standing), false, 'опущенные руки — не жест');
-  assert.equal(isArmsCrossed(standing), false, 'опущенные руки не скрещены');
+test('поднятые руки не вызывают команд даже при длительном удержании', () => {
+  assert.deepEqual(fired(Array.from({ length: 300 }, () => ({ armElevation: 180 }))).events, []);
+  assert.equal(isArmsCrossed(pose()), false);
 });
+
+function crossed() {
+  const body = pose();
+  body.world[15] = { x: -.16, y: -.34, z: -.06 };
+  body.world[16] = { x: .16, y: -.34, z: -.06 };
+  return body;
+}
 
 test('удержанный жест не запускает цепочку экранов даже после сброса экрана и потери позы', () => {
   const engine = new GestureEngine();
   const events: string[] = [];
   for (let t = 0; t < 9000; t += FRAME_MS) {
-    const body = t > 2500 && t < 3100 ? null : pose({ armElevation: 180 });
+    const body = t > 2500 && t < 3100 ? null : crossed();
     const frame = engine.update(body, t);
     if (frame.fired) { events.push(frame.fired); engine.clearCooldown(); }
   }
-  assert.deepEqual(events, ['confirm']);
+  assert.deepEqual(events, ['cross']);
   for (let t = 9000; t < 9600; t += FRAME_MS) engine.update(pose(), t);
   for (let t = 9600; t < 11000; t += FRAME_MS) {
-    const frame = engine.update(pose({ armElevation: 180 }), t);
+    const frame = engine.update(crossed(), t);
     if (frame.fired) events.push(frame.fired);
   }
-  assert.deepEqual(events, ['confirm', 'confirm']);
+  assert.deepEqual(events, ['cross', 'cross']);
 });
 
 test('одна поднятая ладонь не выбирает кнопки и не создаёт команд', () => {
@@ -113,5 +110,5 @@ test('краткое скрещение не ставит паузу, удерж
     const frame = engine.update(body, t);
     if (frame.fired) events.push(frame.fired);
   }
-  assert.deepEqual(events, ['cancel', 'cancel']);
+  assert.deepEqual(events, ['cross', 'cross']);
 });

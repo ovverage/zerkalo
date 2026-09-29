@@ -7,7 +7,6 @@
 import type { AppApi } from '../../core/screen';
 import { Screen } from '../../core/screen';
 import type { DrawHints, ScreenFrame } from '../../core/screen';
-import type { GestureName } from '../../gestures/uiGestures';
 import { esc, plural } from '../../core/dom';
 import {
   EXERCISES,
@@ -30,9 +29,8 @@ export class MenuScreen extends Screen {
       <div class="screen screen--scroll menu">
         <header class="menu__head">
           <div>
-            <p class="guide-eyebrow">${this.app.source === 'demo' ? 'Знакомство с интерфейсом' : this.app.hasVision ? '● Камера подключена' : 'Библиотека движений'}</p>
             <h2 class="menu__title">${this.section === 'programs' ? 'Тренировки' : 'Упражнения'}</h2>
-            <p class="menu__lead">${this.section === 'programs' ? 'Твой темп. Твоя следующая тренировка.' : 'Выбери движение, посмотри видео и начинай.'}</p>
+            <p class="menu__lead">${this.section === 'programs' ? 'Выбери программу.' : 'Техника и отдельные подходы.'}</p>
           </div>
           ${
             totals.sessions > 0
@@ -45,7 +43,7 @@ export class MenuScreen extends Screen {
         </header>
 
         ${this.section === 'programs' ? `
-        <div class="menu-summary"><span>◉ Камера вместо тренера</span><span>${this.workouts.length} программ · ${this.exercises.length} упражнений</span></div>
+        <div class="menu-summary"><span>${this.workouts.length} ${plural(this.workouts.length, 'программа', 'программы', 'программ')}</span><span>${this.exercises.length} ${plural(this.exercises.length, 'упражнение', 'упражнения', 'упражнений')}</span></div>
         <h3 class="menu__sub">Готовые программы <span>Несколько упражнений подряд</span></h3>
         <div class="cards">
           ${this.workouts.map((w, i) => {
@@ -105,12 +103,6 @@ export class MenuScreen extends Screen {
     return { hide: true };
   }
 
-  override onGesture(gesture: GestureName): void {
-    if (gesture === 'confirm' && this.section === 'programs') {
-      const first = WORKOUTS[0];
-      if (first) this.startWorkout(first.id);
-    }
-  }
 
   private startWorkout(id: string): void {
     const plan = workoutById(id);

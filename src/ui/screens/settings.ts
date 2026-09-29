@@ -1,6 +1,5 @@
 import { Screen } from '../../core/screen';
 import type { DrawHints } from '../../core/screen';
-import type { GestureName } from '../../gestures/uiGestures';
 import { loadPrefs, savePrefs } from '../../storage/prefs';
 import type { ModelQuality } from '../../storage/prefs';
 
@@ -15,7 +14,7 @@ export class SettingsScreen extends Screen {
   protected override template(): string {
     const prefs = loadPrefs();
     return `<div class="screen screen--scroll settings">
-      <header class="menu__head"><div><p class="guide-eyebrow">Сделай удобно для себя</p><h2 class="menu__title">Настройки</h2></div></header>
+      <header class="menu__head"><div><p class="guide-eyebrow">Звук и управление</p><h2 class="menu__title">Настройки</h2></div></header>
       <section class="settings-group"><h3>Звук и камера</h3>
         ${this.switchRow('voice', 'Голос тренера', 'Только важное, с паузой от 10 секунд', prefs.voice)}
         ${this.switchRow('sound', 'Звуки повторений', 'Короткий сигнал зачёта и завершения', prefs.sound)}
@@ -25,8 +24,8 @@ export class SettingsScreen extends Screen {
         <div class="model-options" role="group" aria-label="Модель распознавания">${MODELS.map(m => `<button data-action="model-${m.id}" aria-pressed="${prefs.model === m.id}"><span class="model-radio" aria-hidden="true"></span><span><b>${m.name}</b><small>${m.hint}</small></span><span class="model-code">${m.id}</span></button>`).join('')}</div>
         <p class="settings-status" data-el="model-status" role="status"></p>
       </section>
-      <section class="settings-group"><h3>Управление</h3><p class="settings-note">Руки вверх — начать или продолжить. Руки крестом — пауза или назад. Упражнения выбираются касанием, без курсора и кругов.</p><button class="settings-link" data-action="tutorial">Два жеста · инструкция <span>→</span></button></section>
-      <section class="settings-about"><b>Зеркало <span>1.1.0</span></b><p>Кадры остаются на устройстве. История хранится только здесь.</p><button class="btn btn--link" data-action="camera">${this.app.hasVision ? 'На стартовый экран' : 'Подключить камеру'}</button></section>
+      <section class="settings-group"><h3>Управление</h3><p class="settings-note">Скрести руки на груди: начать, поставить паузу или продолжить. Между командами опусти руки. Поднятые руки не вызывают команд.</p><button class="settings-link" data-action="tutorial">Как пользоваться жестом <span>→</span></button></section>
+      <section class="settings-about"><b>Зеркало <span>1.2.0</span></b><p>Кадры остаются на устройстве. История хранится только здесь.</p><button class="btn btn--link" data-action="camera">${this.app.hasVision ? 'На стартовый экран' : 'Подключить камеру'}</button></section>
     </div>`;
   }
   private switchRow(key: string, title: string, hint: string, on: boolean): string {
@@ -62,5 +61,5 @@ export class SettingsScreen extends Screen {
     } finally { this.busy = false; buttons.forEach(b => { b.disabled = false; }); }
   }
   override update(): DrawHints { return { hide: true }; }
-  override onGesture(gesture: GestureName): void { if (gesture === 'cancel') this.app.go({ name: 'menu' }); }
+
 }

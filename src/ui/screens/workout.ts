@@ -58,11 +58,8 @@ export class WorkoutScreen extends Screen {
   }
 
   override get gestureHint(): string {
-    if (this.helpOpen) return 'Руки крестом или обе вверх → закрыть помощь';
-    if (this.canChangeModel) return 'Руки вверх — продолжить · руки крестом — пауза';
-    return this.session.currentSpec?.view === 'side'
-      ? 'Для паузы безопасно встань лицом к камере и скрести руки на груди'
-      : 'Скрести руки на груди → пауза и помощь';
+    if (this.helpOpen) return 'Крест — закрыть помощь';
+    return this.session.currentState === 'paused' ? 'Крест — продолжить' : 'Крест — пауза';
   }
 
   protected override template(): string {
@@ -157,8 +154,7 @@ export class WorkoutScreen extends Screen {
     this.setText('[data-el="pause-label"]', out.state === 'paused' ? 'Продолжить' : 'Пауза');
     this.setText('[data-el="pause-icon"]', out.state === 'paused' ? '▷' : 'Ⅱ');
     const tracked = !out.framing.some((f) => f.severity === 'block');
-    this.setText('[data-el="tracking"]', out.state === 'paused' || out.state === 'rest' ? ''
-      : tracked ? '● Поза отслеживается' : '◌ Ищу рабочие суставы');
+    this.setText('[data-el="tracking"]', out.state === 'running' && !tracked ? 'Счёт приостановлен' : '');
     this.q('[data-el="tracking"]')?.classList.toggle('tracking-status--searching', !tracked);
     this.renderHead(out);
     this.renderCounter(out);
@@ -186,15 +182,7 @@ export class WorkoutScreen extends Screen {
 
   override onGesture(gesture: GestureName): void {
     if (this.helpOpen) { this.closeHelp(); return; }
-    const t = this.now;
-    switch (gesture) {
-      case 'cancel':
-        this.session.togglePause(t);
-        break;
-      case 'confirm':
-        if (this.session.currentState === 'paused') this.session.resume(t);
-        break;
-    }
+    if (gesture === 'cross') this.session.togglePause(this.now);
   }
 
   override onBack(): boolean {
@@ -429,7 +417,7 @@ export class WorkoutScreen extends Screen {
       return `
         <div class="stagepanel__inner">
           <h3 class="stagepanel__title">Пауза</h3>
-          <p class="stagepanel__lead">Подними обе руки над головой, чтобы продолжить.</p>
+          <p class="stagepanel__lead">Скрести руки, чтобы продолжить.</p>
           <button class="btn btn--primary" data-action="resume">Продолжить</button>
           <button class="btn btn--ghost" data-action="help">▶ Как выполнять</button>
           <button class="btn btn--link" data-action="skip">Пропустить упражнение</button>
@@ -463,35 +451,13 @@ export class WorkoutScreen extends Screen {
 
     // setup
     if (!spec) return '';
-    const blocking = out.framing.filter((f) => f.severity === 'block');
-    const warnings = out.framing.filter((f) => f.severity === 'warn');
-    const ready = blocking.length === 0;
-
-    return `
-      <div class="stagepanel__inner setup">
-        <div class="setup__head">
-          <b class="setup__name">${esc(spec.name)}</b>
-          <span class="setup__note">${esc(spec.setup)}</span>
-        </div>
-        <button class="setup__video" data-action="help">▶ Видеопоказ и ракурс камеры</button>
-
-        <div class="checks">
-          <div class="check ${ready ? 'check--ok' : 'check--bad'}">
-            <span class="check__mark">${ready ? '✓' : '…'}</span>
-            <span>${ready ? 'Поза найдена — начинаем автоматически' : 'Ищу позу — можно находиться в любой части кадра'}</span>
-          </div>
-          ${[...blocking, ...warnings]
-            .map(
-              (f) => `
-            <div class="check ${f.severity === 'block' ? 'check--bad' : 'check--warn'}">
-              <span class="check__mark">${f.severity === 'block' ? '✕' : '!'}</span>
-              <span>${esc(f.hint)}</span>
-            </div>`,
-            )
-            .join('')}
-        </div>
-
-      </div>`;
+    const issue = out.framing.find(f => f.severity === 'block') ?? out.framing.find(f => f.severity === 'warn');
+    const ready = !out.framing.some(f => f.severity === 'block');
+    return `<div class="stagepanel__inner setup setup--compact" role="status">
+      <span class="setup__mark" aria-hidden="true">${ready ? '✓' : '◌'}</span>
+      <p class="setup__message">${esc(issue?.hint ?? 'Готово. Начинаем…')}</p>
+      <button class="setup__help" data-action="help" aria-label="Показать позу и ракурс камеры" title="Поза и камера">?</button>
+    </div>`;
   }
 
   /* ── Звук, голос и эффекты ──────────────────────────────────────────────── */

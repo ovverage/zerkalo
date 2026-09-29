@@ -189,3 +189,15 @@ button:focus-visible { outline: 3px solid #8ce8cf; outline-offset: 3px; }
 
 .btn--primary { background: #a5efd3; color: #0b3528; box-shadow: none; border-color: #a5efd3; }
 .btn--primary:hover { background: #b7f8e0; box-shadow: none; }
+
+/* Preparation keeps the camera clear: one reason, one help button. */
+.workout .stagepanel--bottom .setup--compact {
+  display: flex; flex-direction: row; align-items: center; gap: 10px;
+  width: 100%; max-width: 560px; max-height: min(128px, 25dvh);
+  padding: 10px 12px; border-radius: 16px; box-shadow: none;
+}
+.setup__mark { flex: none; color: #a5efd3; font-size: 18px; }
+.setup__message { flex: 1; min-width: 0; margin: 0; font-size: 14px; line-height: 1.4; }
+.setup__help { flex: none; align-self: center; width: 44px; height: 44px; border-radius: 12px; color: #d8e9ee; background: #294150; font-size: 20px; }
+.workout .tracking-status:empty { display: none; }
+.menu-summary { background: none; border: none; border-radius: 0; color: #aebfcc; padding: 0; }

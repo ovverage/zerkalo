@@ -1,11 +1,11 @@
-/** Два осознанных жеста: подтверждение и пауза. Выбор в меню — касанием. */
+/** Один жест: крест на груди. Действие зависит от экрана. Выбор в меню — касанием. */
 import type { Body } from '../vision/landmarks';
 import { height, lateral, vis } from '../vision/landmarks';
 import { clamp } from '../vision/geometry';
 
-export type GestureName = 'confirm' | 'cancel';
+export type GestureName = 'cross';
 export const GESTURE_LABEL: Record<GestureName, string> = {
-  confirm: 'Обе руки над головой', cancel: 'Руки скрещены на груди',
+  cross: 'Руки скрещены на груди',
 };
 export interface GestureFrame {
   needsRelease?: boolean;
@@ -14,7 +14,7 @@ export interface GestureFrame {
   holding: GestureName | null;
 }
 const EMPTY: GestureFrame = { fired: null, hold: 0, holding: null };
-const HOLD_MS = { confirm: 750, cancel: 650 };
+const HOLD_MS = 650;
 const GLOBAL_COOLDOWN_MS = 1300;
 
 export class GestureEngine {
@@ -38,29 +38,22 @@ export class GestureEngine {
       this.reset();
       return { ...EMPTY, needsRelease: !this.armed };
     }
-    const next = isArmsCrossed(body) ? 'cancel' : isHandsUp(body) ? 'confirm' : null;
+    const next = isArmsCrossed(body) ? 'cross' : null;
     if (!next) { this.reset(); return { ...EMPTY }; }
     if (next !== this.candidate) { this.candidate = next; this.since = t; }
     const held = t - (this.since ?? t);
-    if (held >= HOLD_MS[next] && t - this.lastFiredAt >= GLOBAL_COOLDOWN_MS) {
+    if (held >= HOLD_MS && t - this.lastFiredAt >= GLOBAL_COOLDOWN_MS) {
       this.lastFiredAt = t;
       this.armed = false;
       this.neutralSince = null;
       this.reset();
       return { ...EMPTY, fired: next };
     }
-    return { fired: null, holding: next, hold: clamp(held / HOLD_MS[next], 0, 1) };
+    return { fired: null, holding: next, hold: clamp(held / HOLD_MS, 0, 1) };
   }
   reset(): void { this.since = null; this.candidate = null; }
   /** Переход экрана не снимает требование отпустить предыдущий жест. */
   clearCooldown(): void { this.reset(); }
-}
-
-/** Обе кисти явно выше головы. */
-export function isHandsUp(body: Body): boolean {
-  if (vis(body, 'left_wrist') < 0.5 || vis(body, 'right_wrist') < 0.5) return false;
-  const nose = height(body, 'nose');
-  return height(body, 'left_wrist') > nose + 0.06 && height(body, 'right_wrist') > nose + 0.06;
 }
 
 /** Руки скрещены на груди: каждая кисть перешла на противоположную сторону. */
