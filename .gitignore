@@ -39,3 +39,6 @@ coverage/
 public/wasm/
 public/models/*.task
 public/models/*.download
+
+# Prepared submission archive
+release/

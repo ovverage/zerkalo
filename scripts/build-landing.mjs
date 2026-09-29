@@ -44,7 +44,7 @@ for (const subset of FONT_SUBSETS) {
 
 // Кнопка скачивания появляется, только если APK действительно собран: битая
 // ссылка на лендинге хуже, чем честная строка о том, где взять сборку.
-const hasApk = await exists(APK_SOURCE);
+const hasApk = process.argv.includes('--with-apk') && await exists(APK_SOURCE);
 if (hasApk) await copyFile(APK_SOURCE, APK_TARGET);
 
 const apkBlock = hasApk

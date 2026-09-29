@@ -39,7 +39,7 @@
       <!-- ── Первый экран ─────────────────────────────────────────────── -->
       <section class="hero">
         <div class="hero__text">
-          <p class="eyebrow">Admit Hackathon · направление «фитнес-тренер»</p>
+          <p class="eyebrow">ADMIT HACKATHON · MOTION: камера вместо джойстика</p>
           <h1>
             Тренер, который<br />
             <span class="accent">видит твою технику</span>
@@ -282,7 +282,7 @@
         <div class="exgrid">
           <div class="ex"><span>🦵</span><b>Приседания</b><i>глубина, колени, наклон</i></div>
           <div class="ex"><span>⭐</span><b>Jumping jacks</b><i>амплитуда, синхронность</i></div>
-          <div class="ex"><span>🙌</span><b>Жим над головой</b><i>дожим, прогиб в спине</i></div>
+          <div class="ex"><span>🙌</span><b>Жим над головой</b><i>разгибание, возврат локтей</i></div>
           <div class="ex"><span>🕊️</span><b>Разведения</b><i>уровень плеч, локти</i></div>
           <div class="ex"><span>🚶</span><b>Выпады</b><i>глубина, разнос стоп</i></div>
           <div class="ex"><span>🏃</span><b>Высокие колени</b><i>высота, корпус</i></div>
@@ -343,22 +343,22 @@ npm run dev</code></pre>
           localhost — это ограничение браузера, не приложения.
         </p>
         <p class="section__lead">
-          Тесты движка гоняются без камеры, на синтетических позах: <code>npm test</code>.
+          Тесты движка используют синтетические позы. Встроенное демо явно показывает симуляцию; она не подтверждает точность на людях. Живая проверка остаётся отдельным этапом.
         </p>
         <div class="cta">
           <a class="btn btn--primary" href="./app/">Открыть тренажёр</a>
           <!-- ЗАМЕНИТЬ на адрес репозитория перед деплоем: скрипт сборки предупредит,
                если ссылка осталась заглушкой. -->
-          <a class="btn btn--ghost" href="https://github.com/ovverage/zerkalo" rel="noreferrer">Исходный код</a>
+          <a class="btn btn--ghost" href="https://github.com/ovverage/zerkalo" rel="noreferrer">Репозиторий · нужен доступ</a>
         </div>
       </section>
     </main>
 
     <footer class="footer">
-      <p>Зеркало · решение кейса Admit Hackathon, направление «фитнес-тренер»</p>
+      <p>Зеркало · ADMIT HACKATHON · MOTION: камера вместо джойстика</p>
       <p class="fineprint">
         Распознавание позы — MediaPipe Pose. Логика подсчёта, разбора ошибок и жестового управления
-        написана с нуля.
+        реализована собственными модулями проекта поверх сторонней модели.
       </p>
     </footer>
   </body>

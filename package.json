@@ -16,7 +16,9 @@
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "android:apk": "npm run android && node scripts/build-apk.mjs",
     "prepare:assets": "node scripts/prepare-assets.mjs",
-    "postinstall": "npm run prepare:assets"
+    "postinstall": "npm run prepare:assets",
+    "verify:release": "node scripts/verify-release.mjs",
+    "package:web": "node scripts/package-web.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
