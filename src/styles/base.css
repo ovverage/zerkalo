@@ -1,0 +1,111 @@
+/* Базовые переменные и типографика. Тёмная тема — единственная: приложение
+   всегда показывает видео с камеры, и светлый интерфейс поверх него слепит. */
+
+:root {
+  --bg: #07090f;
+  --bg-soft: #0d1119;
+  --panel: rgba(16, 21, 31, 0.82);
+  --panel-solid: #121724;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+
+  --text: #eef3f8;
+  --text-dim: #9aa7b8;
+  --text-faint: #6b7787;
+
+  --accent: #6ee7ff;
+  --accent-deep: #1b8ba5;
+  --good: #7ef9ac;
+  --mid: #ffd166;
+  --bad: #ff4d6d;
+
+  --radius: 16px;
+  --radius-lg: 24px;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+
+  --gutter: 16px;
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+b,
+strong {
+  font-weight: 600;
+}
+
+[data-tone='good'] {
+  color: var(--good);
+}
+[data-tone='mid'] {
+  color: var(--mid);
+}
+[data-tone='bad'] {
+  color: var(--bad);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

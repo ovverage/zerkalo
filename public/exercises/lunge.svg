@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+ <defs><radialGradient id="bg"><stop stop-color="#21354a"/><stop offset="1" stop-color="#101d2d"/></radialGradient></defs>
+ <rect width="800" height="500" fill="url(#bg)"/><circle cx="402" cy="273" r="169" fill="none" stroke="#263d50"/>
+ <path d="M80 433H720 M130 453H670" stroke="#314758"/>
+ <ellipse cx="425" cy="431" rx="260" ry="15" fill="#0a1724"/>
+ <rect x="32" y="29" width="292" height="32" rx="16" fill="#173d46"/>
+ <text x="48" y="50" fill="#8ff5df" font-family="DejaVu Sans" font-size="13" font-weight="bold">01  ИСХОДНАЯ ПОЗА</text>
+ <text x="763" y="49" text-anchor="end" fill="#c1d2e2" font-family="DejaVu Sans" font-size="12" letter-spacing="1">ВИД СБОКУ</text>
+ <path d="M 388.00 267.00 L 365.00 343.00" stroke="#547c8e" stroke-width="24" stroke-linecap="round" fill="none"/><path d="M 365.00 343.00 L 368.00 419.00" stroke="#547c8e" stroke-width="21" stroke-linecap="round" fill="none"/><path d="M 363.00 421.00 L 388.00 421.00" stroke="#e9f2f5" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M 393.00 154.00 L 428.00 193.00" stroke="#288e95" stroke-width="21" stroke-linecap="round" fill="none"/><path d="M 428.00 193.00 L 463.00 228.00" stroke="#b89a87" stroke-width="17" stroke-linecap="round" fill="none"/><path d="M 400.00 270.00 L 442.00 344.00" stroke="#9cb7ce" stroke-width="24" stroke-linecap="round" fill="none"/><path d="M 442.00 344.00 L 443.00 419.00" stroke="#9cb7ce" stroke-width="21" stroke-linecap="round" fill="none"/><path d="M 438.00 421.00 L 463.00 421.00" stroke="#e9f2f5" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M 399.00 156.00 L 394.00 268.50" stroke="#53d4c7" stroke-width="40" stroke-linecap="round" fill="none"/><path d="M 399.00 156.00 L 406.00 112.00" stroke="#f3c6a5" stroke-width="14" stroke-linecap="round" fill="none"/><circle cx="406.00" cy="112.00" r="22" fill="#f3c6a5"/><path d="M 385.00 108.00 Q 388.00 81.00 417.00 90.00 Q 430.00 97.00 427.00 109.00 Q 410.00 92.00 385.00 108.00" fill="#263442"/><path d="M 405.00 158.00 L 440.00 197.00" stroke="#64e1d0" stroke-width="21" stroke-linecap="round" fill="none"/><path d="M 440.00 197.00 L 475.00 232.00" stroke="#f3c6a5" stroke-width="17" stroke-linecap="round" fill="none"/><circle cx="475.00" cy="232.00" r="10" fill="#f3c6a5"/><circle cx="440.00" cy="197.00" r="4" fill="#e9ffff"/><circle cx="442.00" cy="344.00" r="4" fill="#e9ffff"/>
+ <text x="32" y="475" fill="#b1c5d7" font-family="DejaVu Sans" font-size="13">Плавно · без рывков</text>
+ <rect x="570" y="468" width="193" height="3" rx="2" fill="#30475b"/>
+ <rect x="570" y="468" width="1.0" height="3" rx="2" fill="#69dfd0"/>
+ </svg>

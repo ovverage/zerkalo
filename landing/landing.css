@@ -1,0 +1,799 @@
+/**
+ * Лендинг. Те же переменные и тот же визуальный язык, что в приложении, но
+ * отдельный файл: страница статическая и собирается простым копированием.
+ */
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/inter-latin-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2212;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/inter-cyrillic-400.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/inter-latin-600.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2212;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/inter-cyrillic-600.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('./fonts/inter-latin-800.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2212;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('./fonts/inter-cyrillic-800.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+:root {
+  --bg: #07090f;
+  --panel: rgba(16, 21, 31, 0.8);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --text: #eef3f8;
+  --text-dim: #9aa7b8;
+  --text-faint: #6b7787;
+  --accent: #6ee7ff;
+  --accent-deep: #1b8ba5;
+  --good: #7ef9ac;
+  --mid: #ffd166;
+  --bad: #ff4d6d;
+  --radius: 16px;
+  --radius-lg: 24px;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 84px;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1100px 600px at 78% -6%, rgba(110, 231, 255, 0.13), transparent 62%),
+    radial-gradient(900px 520px at 6% 34%, rgba(126, 249, 172, 0.07), transparent 58%),
+    var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+p {
+  margin: 0;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+code {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.92em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.fineprint {
+  font-size: 13px;
+  color: var(--text-faint);
+  line-height: 1.55;
+}
+
+/* ── Шапка ──────────────────────────────────────────────────────────────── */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px clamp(16px, 4vw, 48px);
+  background: rgba(7, 9, 15, 0.82);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.logo__mark {
+  color: var(--accent);
+  font-size: 20px;
+  text-shadow: 0 0 18px rgba(110, 231, 255, 0.7);
+}
+
+.topnav {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 28px);
+  font-size: 14px;
+}
+
+.topnav a {
+  color: var(--text-dim);
+}
+
+.topnav a:hover {
+  color: var(--text);
+}
+
+.topnav__cta {
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #05202b !important;
+  font-weight: 700;
+}
+
+/* ── Первый экран ───────────────────────────────────────────────────────── */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: center;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(40px, 7vh, 86px) clamp(16px, 4vw, 48px) clamp(30px, 5vh, 60px);
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.hero h1 {
+  font-size: clamp(34px, 5.6vw, 62px);
+  font-weight: 800;
+}
+
+.lead {
+  margin-top: 18px;
+  font-size: clamp(15px, 1.5vw, 18px);
+  color: var(--text-dim);
+  max-width: 54ch;
+}
+
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 14px 26px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 15px;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.13);
+  transform: translateY(-1px);
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, var(--accent) 0%, #4ec9ec 100%);
+  border-color: transparent;
+  color: #05202b;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(110, 231, 255, 0.26);
+}
+
+.btn--primary:hover {
+  background: linear-gradient(135deg, #8bf0ff 0%, var(--accent) 100%);
+}
+
+/* Заглушка вместо кнопки, когда APK не собран: выглядит как информация,
+   а не как то, что можно нажать. */
+.btn--muted {
+  cursor: default;
+  color: var(--text-dim);
+  border-style: dashed;
+  background: none;
+}
+
+.btn--muted:hover {
+  transform: none;
+  background: none;
+}
+
+.btn__sub {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.hero__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 26px;
+  margin: 28px 0 16px;
+}
+
+.hero__facts li {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.hero__facts b {
+  display: block;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+/* ── Демонстрация интерфейса ────────────────────────────────────────────── */
+
+.phone {
+  width: min(330px, 100%);
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 34px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03));
+  box-shadow: var(--shadow);
+}
+
+/* Внутренности мокапа заданы в контейнерных единицах: в пикселях они не
+   масштабируются вместе с рамкой, и на узком экране подсказка выезжала за
+   пределы «экрана». */
+.phone__screen {
+  container-type: inline-size;
+  position: relative;
+  aspect-ratio: 9 / 17;
+  border-radius: 26px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #1b2532 0%, #0c111a 100%);
+  padding: 4cqw;
+}
+
+.phone__bar {
+  display: flex;
+  align-items: center;
+  gap: 3cqw;
+  padding: 2.6cqw 4cqw;
+  border-radius: 4cqw;
+  background: rgba(10, 14, 22, 0.8);
+  border: 1px solid var(--border);
+  font-size: 4cqw;
+}
+
+.phone__bar b {
+  display: block;
+  font-weight: 700;
+}
+
+.phone__bar i {
+  font-style: normal;
+  font-size: 3.3cqw;
+  color: var(--text-dim);
+}
+
+.phone__icon {
+  font-size: 5.6cqw;
+}
+
+.figure {
+  position: absolute;
+  left: 50%;
+  top: 41%;
+  transform: translate(-50%, -50%);
+  width: 56%;
+  overflow: visible;
+}
+
+.figure__pose {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0;
+  filter: drop-shadow(0 0 8px rgba(110, 231, 255, 0.5));
+  animation: pose 7.5s ease-in-out infinite;
+}
+
+.figure__pose--1 {
+  animation-name: poseMid;
+}
+.figure__pose--2 {
+  animation-name: poseDeep;
+}
+
+/* В нижней точке ноги подсвечены красным — так выглядит активная подсказка. */
+.figure__pose .bad {
+  stroke: var(--bad);
+  filter: drop-shadow(0 0 8px rgba(255, 77, 109, 0.8));
+}
+
+.figure__floor {
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-width: 2;
+  stroke-dasharray: 4 7;
+}
+
+@keyframes pose {
+  0%,
+  8% {
+    opacity: 1;
+  }
+  16%,
+  84% {
+    opacity: 0;
+  }
+  92%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes poseMid {
+  0%,
+  10% {
+    opacity: 0;
+  }
+  18%,
+  26% {
+    opacity: 1;
+  }
+  34%,
+  66% {
+    opacity: 0;
+  }
+  74%,
+  82% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes poseDeep {
+  0%,
+  30% {
+    opacity: 0;
+  }
+  38%,
+  62% {
+    opacity: 1;
+  }
+  70%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.phone__counter {
+  position: absolute;
+  right: 4cqw;
+  top: 38%;
+  padding: 3cqw 5cqw;
+  border-radius: 5cqw;
+  background: rgba(10, 14, 22, 0.78);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.phone__counter b {
+  display: block;
+  font-size: 11cqw;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.phone__counter i {
+  font-style: normal;
+  font-size: 3.6cqw;
+  color: var(--text-dim);
+}
+
+.tips {
+  position: absolute;
+  left: 4cqw;
+  right: 4cqw;
+  bottom: 4cqw;
+  height: 31cqw;
+}
+
+.tip {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  gap: 3cqw;
+  align-items: center;
+  padding: 3.6cqw 4cqw;
+  border-radius: 5cqw;
+  background: rgba(8, 11, 18, 0.93);
+  border: 1px solid var(--bad);
+  font-size: 3.9cqw;
+  line-height: 1.35;
+  font-weight: 600;
+  opacity: 0;
+  animation: tipCycle 7.5s ease-in-out infinite;
+}
+
+.tip[data-kind='warn'] {
+  border-color: var(--mid);
+}
+
+.tip__badge {
+  flex: none;
+  width: 8cqw;
+  height: 8cqw;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 4cqw;
+  font-weight: 700;
+  background: var(--bad);
+  color: #2b0009;
+}
+
+.tip[data-kind='warn'] .tip__badge {
+  background: var(--mid);
+  color: #2e2100;
+}
+
+.tip--1 {
+  animation-delay: 2.5s;
+}
+.tip--2 {
+  animation-delay: 5s;
+}
+
+@keyframes tipCycle {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  5%,
+  28% {
+    opacity: 1;
+    transform: none;
+  }
+  33%,
+  100% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/* ── Секции ─────────────────────────────────────────────────────────────── */
+
+.section {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(42px, 7vh, 82px) clamp(16px, 4vw, 48px);
+  border-top: 1px solid var(--border);
+}
+
+.section h2 {
+  font-size: clamp(25px, 3.4vw, 38px);
+  font-weight: 800;
+}
+
+.section__lead {
+  margin-top: 12px;
+  color: var(--text-dim);
+  max-width: 68ch;
+}
+
+.grid {
+  display: grid;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.grid--3 {
+  grid-template-columns: repeat(auto-fit, minmax(258px, 1fr));
+}
+
+.grid--2 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.card {
+  padding: 22px;
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+
+.card__icon {
+  display: block;
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.card p {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+/* ── Категории ошибок ───────────────────────────────────────────────────── */
+
+.errors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.err {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+
+.err--extra {
+  border-color: rgba(110, 231, 255, 0.35);
+}
+
+.err__num {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 14px;
+  background: rgba(110, 231, 255, 0.15);
+  color: var(--accent);
+}
+
+.err h3 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.err__quote {
+  margin-top: 9px;
+  padding-left: 13px;
+  border-left: 2px solid var(--bad);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.err__note {
+  margin-top: 9px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.callout {
+  margin-top: 20px;
+  padding: 22px;
+  border-radius: var(--radius-lg);
+  background: rgba(110, 231, 255, 0.07);
+  border: 1px solid rgba(110, 231, 255, 0.28);
+}
+
+.callout b {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.callout p {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+/* ── Упражнения ─────────────────────────────────────────────────────────── */
+
+.exgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+  margin: 26px 0 14px;
+}
+
+.ex {
+  position: relative;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+}
+
+.ex span {
+  font-size: 22px;
+}
+
+.ex b {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ex i {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.ex--side::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mid);
+}
+
+/* ── Запуск ─────────────────────────────────────────────────────────────── */
+
+.section--judge pre {
+  margin: 22px 0 16px;
+  padding: 18px 22px;
+  border-radius: var(--radius);
+  background: #0b0f17;
+  border: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.section--judge code {
+  background: none;
+  padding: 0;
+  color: var(--good);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.section--judge .section__lead code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  color: var(--text);
+}
+
+/* ── Подвал ─────────────────────────────────────────────────────────────── */
+
+.footer {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 34px clamp(16px, 4vw, 48px) 54px;
+  border-top: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Узкий экран ────────────────────────────────────────────────────────── */
+
+@media (max-width: 880px) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding-top: 34px;
+  }
+
+  .hero__demo {
+    order: -1;
+  }
+
+  /* Мокап уступает место заголовку и кнопке: на узком экране он иначе занимает
+     весь первый экран и отталкивает главное действие за сгиб. */
+  .phone {
+    width: min(228px, 64%);
+  }
+
+  .hero__facts {
+    gap: 18px;
+    margin: 20px 0 12px;
+  }
+
+  .hero__facts b {
+    font-size: 22px;
+  }
+
+  .topnav a:not(.topnav__cta) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .figure__pose--0,
+  .tip--0 {
+    opacity: 1;
+  }
+}

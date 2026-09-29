@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Иконка приложения: тот же скелет, что пользователь видит на себе. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16202e"/>
+      <stop offset="1" stop-color="#07090f"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="9" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- Фигура смещена и увеличена: в квадратной иконке она иначе тонет в поле,
+       а в адаптивной всё равно остаётся внутри безопасной зоны. -->
+  <g transform="translate(256 262) scale(1.2) translate(-256 -268)">
+
+  <g stroke="#6ee7ff" stroke-width="17" stroke-linecap="round" fill="none" filter="url(#glow)">
+    <circle cx="256" cy="132" r="38"/>
+    <line x1="208" y1="206" x2="304" y2="206"/>
+    <line x1="208" y1="206" x2="186" y2="272"/>
+    <line x1="304" y1="206" x2="326" y2="272"/>
+    <line x1="208" y1="206" x2="228" y2="312"/>
+    <line x1="304" y1="206" x2="284" y2="312"/>
+    <line x1="228" y1="312" x2="284" y2="312"/>
+    <line x1="228" y1="312" x2="216" y2="392"/>
+    <line x1="284" y1="312" x2="296" y2="392"/>
+  </g>
+
+  <g fill="#e8fdff">
+    <circle cx="208" cy="206" r="12"/><circle cx="304" cy="206" r="12"/>
+    <circle cx="228" cy="312" r="12"/><circle cx="284" cy="312" r="12"/>
+    <circle cx="216" cy="392" r="12"/><circle cx="296" cy="392" r="12"/>
+  </g>
+
+  <line x1="176" y1="440" x2="336" y2="440" stroke="#7ef9ac" stroke-width="12"
+        stroke-linecap="round" stroke-dasharray="6 26"/>
+  </g>
+</svg>

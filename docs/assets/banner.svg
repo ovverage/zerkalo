@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="640" viewBox="0 0 1600 640" role="img" aria-labelledby="title description">
+  <title id="title">Зеркало — фитнес-тренер, который видит технику</title>
+  <desc id="description">Тёмный баннер с бирюзовой схемой распознавания позы, счётчиком повторений и подписью Web и Android.</desc>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#0b1422"/><stop offset="1" stop-color="#101f31"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#257e80" stop-opacity=".28"/><stop offset="1" stop-color="#257e80" stop-opacity="0"/></radialGradient>
+    <linearGradient id="mint" x2="1" y2="1"><stop stop-color="#96ffe0"/><stop offset="1" stop-color="#5cd6ee"/></linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#6bbeb8" stroke-opacity=".06"/></pattern>
+    <filter id="soft"><feGaussianBlur stdDeviation="5"/></filter>
+    <linearGradient id="edge" x2="1"><stop stop-color="#88efd3"/><stop offset="1" stop-color="#88efd3" stop-opacity="0"/></linearGradient>
+  </defs>
+  <rect width="1600" height="640" rx="24" fill="url(#bg)"/>
+  <rect width="1600" height="640" rx="24" fill="url(#grid)"/>
+  <ellipse cx="1220" cy="300" rx="570" ry="420" fill="url(#glow)"/>
+  <g font-family="Inter, DejaVu Sans, sans-serif">
+    <g transform="translate(78 64)">
+      <rect width="40" height="40" rx="12" fill="#173b41" stroke="#76e5ce" stroke-opacity=".45"/>
+      <path d="M12 11H7v18h5M28 11h5v18h-5M20 11v18" fill="none" stroke="#96f7df" stroke-width="2" stroke-linecap="round"/>
+      <text x="56" y="26" fill="#b5cbda" font-size="15" font-weight="600" letter-spacing="3">ДВИЖЕНИЕ. ТЕХНИКА. ПРОГРЕСС.</text>
+    </g>
+    <text x="73" y="238" fill="#f1f7fc" font-size="111" font-weight="800" letter-spacing="-7">ЗЕРКАЛО</text>
+    <rect x="79" y="270" width="106" height="5" rx="2.5" fill="url(#mint)"/>
+    <text x="77" y="339" fill="#edf5fc" font-size="34" font-weight="500">Фитнес-тренер,</text>
+    <text x="77" y="388" fill="#edf5fc" font-size="34" font-weight="500">который видит технику.</text>
+    <text x="79" y="445" fill="#abc1d2" font-size="20">Камера видит движение — ты видишь прогресс.</text>
+    <g transform="translate(78 525)" font-size="14" font-weight="600">
+      <rect width="181" height="42" rx="21" fill="#173331" stroke="#32625a"/><text x="24" y="27" fill="#b2f8df">11 упражнений</text>
+      <rect x="193" width="185" height="42" rx="21" fill="#152639" stroke="#34495f"/><text x="216" y="27" fill="#d9e9f6">Web + Android</text>
+      <rect x="390" width="194" height="42" rx="21" fill="#152639" stroke="#34495f"/><text x="413" y="27" fill="#d9e9f6">Без отправки видео</text>
+    </g>
+    <g transform="translate(870 57)">
+      <rect width="652" height="526" rx="30" fill="#0c1927" fill-opacity=".7" stroke="#3b6871" stroke-opacity=".75"/>
+      <path d="M26 73H626M26 454H626" stroke="#284552"/>
+      <circle cx="35" cy="37" r="5" fill="#8defd0"/>
+      <text x="51" y="43" fill="#b4efd9" font-size="12" font-weight="600" letter-spacing="1.8">ПОЗА НАЙДЕНА</text>
+      <text x="617" y="43" fill="#829fb3" font-size="12" text-anchor="end" letter-spacing="1.4">POSE / 01</text>
+      <path d="M103 126V101H129 M439 101H465V126 M103 393V418H129 M439 418H465V393" fill="none" stroke="#5ca49e" stroke-width="2"/>
+      <path d="M126 260H442" stroke="#77eacb" stroke-opacity=".14" stroke-dasharray="4 7"/>
+      <ellipse cx="285" cy="410" rx="150" ry="18" fill="#65e2cb" fill-opacity=".055"/>
+      <!-- Original pose diagram; intentionally separate from any camera frame. -->
+      <g stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <path d="M297 207L262 291L347 316L317 399M297 207L350 245L405 233" stroke="#5b8497" stroke-width="15"/>
+        <path d="M272 201L237 284L326 307L293 399M272 201L328 240L385 228" stroke="#7feacf" stroke-opacity=".2" stroke-width="27" filter="url(#soft)"/>
+        <path d="M272 201L237 284L326 307L293 399M272 201L328 240L385 228" stroke="url(#mint)" stroke-width="15"/>
+        <path d="M272 201L297 207M237 284L262 291M293 399L326 402M317 399L349 402" stroke="#8fe6d4" stroke-width="10"/>
+        <path d="M282 178L272 201" stroke="#bcecdf" stroke-width="11"/>
+        <circle cx="287" cy="151" r="27" stroke="#d4fff0" stroke-width="7"/>
+        <path d="M287 146L303 152" stroke="#d4fff0" stroke-width="3"/>
+        <path d="M303 301Q294 319 309 332" stroke="#efffea" stroke-width="2"/>
+      </g>
+      <g fill="#112f3b" stroke="#b0ffe7" stroke-width="3">
+        <circle cx="272" cy="201" r="6"/><circle cx="328" cy="240" r="6"/>
+        <circle cx="385" cy="228" r="6"/><circle cx="237" cy="284" r="6"/>
+        <circle cx="326" cy="307" r="6"/><circle cx="293" cy="399" r="6"/>
+      </g>
+      <path d="M338 307H422L447 288" fill="none" stroke="#559b98" stroke-width="1.5"/>
+      <rect x="447" y="259" width="160" height="61" rx="13" fill="#173635" stroke="#3d756b"/>
+      <text x="462" y="283" fill="#a0cfc1" font-size="10" font-weight="600" letter-spacing="1">УГОЛ КОЛЕНА</text>
+      <text x="462" y="307" fill="#b2ffe2" font-size="23" font-weight="600">92°</text>
+      <g transform="translate(449 99)">
+        <rect width="158" height="134" rx="18" fill="#142638" stroke="#36576b"/>
+        <text x="20" y="28" fill="#aac2d6" font-size="11" letter-spacing="1">ПОВТОРЕНИЯ</text>
+        <text x="16" y="91" fill="#f0faff" font-size="62" font-weight="800" letter-spacing="-4">08</text>
+        <text x="22" y="114" fill="#85e4c7" font-size="11">из 12</text>
+        <rect x="64" y="107" width="73" height="4" rx="2" fill="#2a4354"/>
+        <rect x="64" y="107" width="49" height="4" rx="2" fill="#80e6c5"/>
+      </g>
+      <text x="29" y="488" fill="#8aabbf" font-size="11" letter-spacing="1.6">MEDIAPIPE</text>
+      <path d="M193 486H218L226 477L235 496L246 474L256 487H363" stroke="#75d8bd" stroke-width="1.5" fill="none"/>
+      <text x="617" y="490" text-anchor="end" fill="#c3d7e7" font-size="13">Техника в фокусе</text>
+    </g>
+  </g>
+</svg>

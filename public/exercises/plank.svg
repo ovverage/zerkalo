@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+ <defs><radialGradient id="bg"><stop stop-color="#21354a"/><stop offset="1" stop-color="#101d2d"/></radialGradient></defs>
+ <rect width="800" height="500" fill="url(#bg)"/><circle cx="402" cy="273" r="169" fill="none" stroke="#263d50"/>
+ <path d="M80 433H720 M130 453H670" stroke="#314758"/>
+ <ellipse cx="425" cy="431" rx="260" ry="15" fill="#0a1724"/>
+ <rect x="32" y="29" width="292" height="32" rx="16" fill="#173d46"/>
+ <text x="48" y="50" fill="#8ff5df" font-family="DejaVu Sans" font-size="13" font-weight="bold">ДЕРЖИ ПОЗУ  •  ДЫШИ РОВНО</text>
+ <text x="763" y="49" text-anchor="end" fill="#c1d2e2" font-family="DejaVu Sans" font-size="12" letter-spacing="1">ВИД СБОКУ</text>
+ <path d="M 477.12 359.60 L 576.88 387.15" stroke="#547c8e" stroke-width="24" stroke-linecap="round" fill="none"/><path d="M 576.88 387.15 L 656.00 409.00" stroke="#547c8e" stroke-width="21" stroke-linecap="round" fill="none"/><path d="M 651.00 411.00 L 676.00 411.00" stroke="#e9f2f5" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M 312.00 314.00 L 308.00 409.00" stroke="#288e95" stroke-width="21" stroke-linecap="round" fill="none"/><path d="M 308.00 409.00 L 244.00 409.00" stroke="#b89a87" stroke-width="17" stroke-linecap="round" fill="none"/><path d="M 477.12 369.60 L 576.88 397.15" stroke="#9cb7ce" stroke-width="24" stroke-linecap="round" fill="none"/><path d="M 576.88 397.15 L 656.00 419.00" stroke="#9cb7ce" stroke-width="21" stroke-linecap="round" fill="none"/><path d="M 651.00 421.00 L 676.00 421.00" stroke="#e9f2f5" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M 312.00 319.00 L 477.12 364.60" stroke="#53d4c7" stroke-width="40" stroke-linecap="round" fill="none"/><path d="M 312.00 319.00 L 270.00 303.00" stroke="#f3c6a5" stroke-width="14" stroke-linecap="round" fill="none"/><circle cx="270.00" cy="303.00" r="22" fill="#f3c6a5"/><path d="M 249.00 299.00 Q 252.00 272.00 281.00 281.00 Q 294.00 288.00 291.00 300.00 Q 274.00 283.00 249.00 299.00" fill="#263442"/><path d="M 312.00 324.00 L 308.00 419.00" stroke="#64e1d0" stroke-width="21" stroke-linecap="round" fill="none"/><path d="M 308.00 419.00 L 244.00 419.00" stroke="#f3c6a5" stroke-width="17" stroke-linecap="round" fill="none"/><circle cx="244.00" cy="419.00" r="10" fill="#f3c6a5"/><circle cx="308.00" cy="419.00" r="4" fill="#e9ffff"/><circle cx="576.88" cy="397.15" r="4" fill="#e9ffff"/>
+ <text x="32" y="475" fill="#b1c5d7" font-family="DejaVu Sans" font-size="13">Плавно · без рывков</text>
+ <rect x="570" y="468" width="193" height="3" rx="2" fill="#30475b"/>
+ <rect x="570" y="468" width="1.0" height="3" rx="2" fill="#69dfd0"/>
+ </svg>

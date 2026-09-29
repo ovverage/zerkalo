@@ -39,6 +39,8 @@ npm run dev
 - **«Упражнения и видеопоказы»** позволяет сначала изучить упражнения без доступа к камере.
 - **«Демо без камеры»** требует собственного файла `public/demo/demo.mp4`. Такая запись **не включена** в репозиторий; это отдельный режим, не библиотека анимированных видеопоказов. [Требования к ролику →](public/demo/README.md)
 
+При `npm ci` скрипт `postinstall` копирует WASM из установленного MediaPipe и скачивает три модели из официального хранилища Google (около 44 МиБ). Размеры и SHA-256 зафиксированы в [`scripts/models.json`](scripts/models.json); уже подготовленные файлы проверяются и используются повторно. Если загрузка прервалась, выполните `npm run prepare:assets`. Скачивание нужно при подготовке проекта, а не во время тренировки.
+
 Модель **Heavy** выбрана по умолчанию. Она занимает около 30 МБ; первый запуск может быть заметно дольше последующих. В настройках есть **Full** и **Lite** для устройств, которым тяжело обрабатывать Heavy.
 
 ## Как тренироваться
@@ -125,8 +127,8 @@ src/
   storage/            настройки и история в localStorage
   styles/             адаптивный интерфейс
 public/
-  models/             Heavy, Full и Lite
-  wasm/               локальный рантайм MediaPipe
+  models/             Heavy, Full и Lite (подготавливаются при установке)
+  wasm/               рантайм из npm (подготавливается при установке)
   exercises/          11 MP4 и SVG-иллюстрации
   demo/               инструкция для необязательной видеозаписи
 android/              оболочка Capacitor и Gradle wrapper
@@ -147,6 +149,7 @@ docs/                 архитектура и исходник баннера
 | Команда | Назначение |
 | --- | --- |
 | `npm ci` | Установить зависимости строго по lock-файлу |
+| `npm run prepare:assets` | Подготовить WASM и проверить / скачать модели |
 | `npm run dev` | Запустить Vite, по умолчанию порт 5173 |
 | `npm run typecheck` | Проверить типы TypeScript |
 | `npm test` | Запустить тесты движка, отслеживания, жестов, голоса и видеогидов |
@@ -237,7 +240,7 @@ npm run build
 
 ## Материалы и зависимости
 
-- [MediaPipe Pose Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker) — модель позы и рантайм. Локальные файлы и происхождение описаны в [public/models/README.md](public/models/README.md).
+- [MediaPipe Pose Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker) — модель позы и рантайм. Подготовка локальных файлов и их происхождение описаны в [public/models/README.md](public/models/README.md).
 - [Capacitor](https://capacitorjs.com/) — Android-оболочка; [Inter](https://github.com/rsms/inter) через Fontsource — локальный шрифт.
 - [Баннер PNG](docs/assets/banner.png) и [редактируемый SVG](docs/assets/banner.svg) входят в репозиторий.
 - Анимации воспроизводимы: `python3 scripts/build-exercise-videos.py` (нужны `ffmpeg` и `rsvg-convert`). Для обычной сборки генератор не требуется.

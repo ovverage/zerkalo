@@ -1,0 +1,40 @@
+{
+  "name": "zerkalo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Зеркало — фитнес-тренер, который видит вашу технику через веб-камеру",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run clean && tsc --noEmit && vite build && node scripts/build-landing.mjs",
+    "preview": "vite preview --outDir dist --port 4173",
+    "typecheck": "tsc --noEmit",
+    "test": "node test/run.mjs",
+    "build:app": "tsc --noEmit && vite build",
+    "android": "npm run build:app && cap sync android",
+    "android:open": "cap open android",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "android:apk": "npm run android && node scripts/build-apk.mjs",
+    "prepare:assets": "node scripts/prepare-assets.mjs",
+    "postinstall": "npm run prepare:assets"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "^8.5.2",
+    "@fontsource/inter": "^5.3.0",
+    "@mediapipe/tasks-vision": "0.10.35"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
+    "@types/node": "^26.6.3",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

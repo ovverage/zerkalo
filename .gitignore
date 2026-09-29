@@ -1,0 +1,41 @@
+node_modules/
+dist/
+.vite/
+*.local
+.DS_Store
+.vercel/
+.test-build/
+
+# Android
+android/local.properties
+android/.gradle/
+android/app/build/
+android/build/
+android/capacitor-cordova-android-plugins/
+android/app/src/main/assets/public/
+
+# Local tooling, backups and verification output
+.backups/
+.test-artifacts/
+.claude/
+.codex/
+.idea/
+.vscode/
+coverage/
+*.log
+
+# Environment files and signing material
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.pem
+*.key
+*.apk
+*.aab
+
+# Prepared from pinned npm runtime and verified official model downloads
+public/wasm/
+public/models/*.task
+public/models/*.download
