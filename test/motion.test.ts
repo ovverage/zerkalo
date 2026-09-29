@@ -164,3 +164,36 @@ test('частота новых результатов не растёт от п
   assert.ok(meter.fps(5000) < 10);
   assert.equal(meter.fps(10000), 0);
 });
+
+test('75 секунд остаются 75 секундами при одном обновлении в секунду', () => {
+  const session = new WorkoutSession(workoutById('repair')!);
+  session.start(0);
+  let t = 0;
+  while (session.currentState !== 'running' && t < 10000) {
+    t += 1000;
+    session.update(pose(), t, .5);
+  }
+  assert.equal(session.currentState, 'running');
+  const beganAt = t;
+  for (let sec = 1; sec < 75; sec++) {
+    const out = session.update(pose(), beganAt + sec * 1000, .5);
+    assert.equal(out.state, 'running');
+    assert.equal(out.remainingSec, 75 - sec);
+  }
+  assert.equal(session.update(pose(), beganAt + 75000, .5).state, 'done');
+});
+
+test('пауза между кадрами учитывает точное время и исключает минуту без обновлений', () => {
+  const session = new WorkoutSession(workoutById('repair')!);
+  session.start(0);
+  for (let t = 0; t <= 4000; t += 100) session.update(pose(), t, .5);
+  session.pause(4600); // 1 секунда выполнения, включая 600 мс после последнего кадра.
+  const paused = session.update(null, 64600, .5);
+  assert.equal(paused.state, 'paused');
+  assert.equal(paused.remainingSec, 74);
+  session.resume(64600);
+  for (let t = 64600; t <= 68200; t += 100) session.update(pose(), t, .5);
+  assert.equal(session.currentState, 'running');
+  assert.equal(session.update(pose(), 142199, .5).state, 'running');
+  assert.equal(session.update(pose(), 142200, .5).state, 'done');
+});

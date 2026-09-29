@@ -168,10 +168,7 @@ export class WorkoutSession {
 
   /** Главный вход: вызывается на каждом кадре видео. */
   update(body: Body | null, t: number, brightness: number | null): FrameOutcome {
-    if (this.state === 'running' && this.lastTickAt !== null) {
-      this.activeMs += Math.max(0, Math.min(t - this.lastTickAt, 250));
-    }
-    this.lastTickAt = t;
+    this.advanceClock(t);
     if (this.plan.durationSec && this.activeMs >= this.plan.durationSec * 1000 && this.state !== 'done') {
       this.finish(t);
       return this.emptyOutcome();
@@ -295,6 +292,11 @@ export class WorkoutSession {
 
   pause(t: number): void {
     if (this.state === 'paused' || this.state === 'done') return;
+    this.advanceClock(t);
+    if (this.plan.durationSec && this.activeMs >= this.plan.durationSec * 1000) {
+      this.finish(t);
+      return;
+    }
     this.stateBeforePause = this.state;
     this.active?.counter.abort();
     this.active?.analyzer.reset();
@@ -322,6 +324,7 @@ export class WorkoutSession {
   }
 
   finish(t: number): SessionResult {
+    this.advanceClock(t);
     if (this.active && this.state !== 'done') this.closeStep(t, true);
     this.endedAt = t;
     return this.buildResult();
@@ -332,6 +335,14 @@ export class WorkoutSession {
   }
 
   /* ── Внутреннее ─────────────────────────────────────────────────────────── */
+
+  /** Часы не зависят от FPS; скрытие вкладки останавливает сессию явно. */
+  private advanceClock(t: number): void {
+    if (this.state === 'running' && this.lastTickAt !== null) {
+      this.activeMs += Math.max(0, t - this.lastTickAt);
+    }
+    this.lastTickAt = Math.max(t, this.lastTickAt ?? t);
+  }
 
   private openStep(t: number): void {
     const step = this.plan.steps[this.stepIndex];

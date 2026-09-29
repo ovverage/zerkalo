@@ -204,6 +204,23 @@ export class WorkoutScreen extends Screen {
     this.q<HTMLDialogElement>('[data-el="help"]')?.close();
   }
 
+  override onVisibilityChange(hidden: boolean, t: number): void {
+    this.frameTime = t;
+    if (!hidden) {
+      playGuideVideos(this.root);
+      return;
+    }
+    if (!this.started) {
+      this.session.start(t);
+      this.started = true;
+    }
+    this.session.pause(t);
+    this.resumeAfterHelp = false;
+    if (this.helpOpen) this.setText('.guide-dialog__foot [data-action="close-help"]', 'Вернуться к паузе');
+    this.app.coach.stop();
+    stopGuideVideos(this.root);
+  }
+
   private openHelp(): void {
     if (this.helpOpen) return;
     const spec = this.session.currentSpec;

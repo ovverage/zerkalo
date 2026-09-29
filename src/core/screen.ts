@@ -122,6 +122,11 @@ export abstract class Screen {
     void gesture;
   }
 
+  onVisibilityChange(hidden: boolean, t: number): void {
+    void hidden;
+    void t;
+  }
+
   unmount(): void {}
 
   protected q<T extends HTMLElement>(selector: string): T | null {

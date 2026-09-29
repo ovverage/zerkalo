@@ -102,6 +102,13 @@ async function run() {
   expect(!ui.querySelector('dialog[open]'), 'помощь закрывается жестом, пауза сохраняется');
   gesture('confirm'); feed(pose(), 160);
   expect(!screen.dwellEnabled, 'возобновление повторно проверяет кадр');
+  screen.onVisibilityChange(true, t + 50);
+  t += 60000;
+  screen.onVisibilityChange(false, t);
+  tick(pose());
+  expect(screen.dwellEnabled && ui.textContent?.includes('Пауза'), 'сворачивание ставит паузу; возврат через минуту не запускает движение');
+  gesture('confirm'); feed(pose(), 160);
+  expect(!screen.dwellEnabled, 'после возврата можно продолжить жестом с новой проверкой кадра');
   const demo = new DemoSimulation();
   for (let i = 0; i < 4000 && route.name !== 'results'; i++) {
     tick(demo.frame(t + 1000 / 30, screen.demoMotion));

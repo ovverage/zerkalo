@@ -91,6 +91,12 @@ export class App implements AppApi {
     this.sound.setEnabled(prefs.sound);
     this.mirrored = prefs.mirrored;
 
+    document.addEventListener('visibilitychange', () => {
+      this.screen?.onVisibilityChange(document.hidden, performance.now());
+      if (document.hidden) this.coach.stop();
+      this.lastFrameAt = 0;
+    });
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'd' && e.ctrlKey) {
         this.showFps = !this.showFps;
@@ -203,6 +209,7 @@ export class App implements AppApi {
     host.className = 'screenhost';
     this.els.ui.appendChild(host);
     this.screen.mount(host);
+    if (document.hidden) this.screen.onVisibilityChange(true, performance.now());
     if (this.sourceKind === 'demo' && route.name !== 'welcome') {
       const banner = document.createElement('aside');
       banner.className = 'source-banner';
@@ -245,6 +252,7 @@ export class App implements AppApi {
 
   private loop = (now: number): void => {
     this.raf = requestAnimationFrame(this.loop);
+    if (document.hidden) return;
 
     const dt = this.lastFrameAt ? Math.min((now - this.lastFrameAt) / 1000, 0.25) : 1 / 60;
     this.lastFrameAt = now;
