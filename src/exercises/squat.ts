@@ -150,7 +150,7 @@ export const squat: ExerciseSpec = {
       lowerIsMoreWork: true,
       highlight: ['legs'],
       hint: (side, diff) =>
-        `${side === 'left' ? 'Левая' : 'Правая'} нога сгибается на ${deg(diff)} меньше — вес уходит на другую. Приседай симметрично.`,
+        `${side === 'left' ? 'Левая' : 'Правая'} нога сгибается на ${deg(diff)} меньше. Попробуй выровнять амплитуду, приседай симметрично.`,
     }),
   ],
 

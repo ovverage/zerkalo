@@ -10,7 +10,7 @@
 
 **Репозиторий:** [ovverage/zerkalo](https://github.com/ovverage/zerkalo) — публичный, открыт владельцем для проверки жюри.
 
-**Публичная веб-версия:** пока не опубликована. Рабочую HTTPS-ссылку нужно добавить после разрешённого владельцем размещения.
+**Публичная веб-версия:** [открыть тренажёр](https://ovverage.github.io/zerkalo/app/) · [страница проекта](https://ovverage.github.io/zerkalo/). Работает по HTTPS без входа в GitHub.
 
 **Локальная сборка:** [localhost:4173/app/](http://localhost:4173/app/).
 
