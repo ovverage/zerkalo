@@ -20,7 +20,7 @@ export class PreviewScreen extends Screen {
         <button class="btn btn--ghost" data-action="back" data-dwell="preview-back">← Упражнения</button>
         <span class="preview__quiet">Без звука · в твоём темпе</span>
       </header>
-      <div class="preview__title"><p class="guide-eyebrow">${this.plan.steps.length > 1 ? esc(this.plan.name) : 'Перед началом'}</p>
+      <div class="preview__title"><p class="guide-eyebrow">${this.plan.steps.length > 1 || this.plan.durationSec ? esc(this.plan.name) : 'Перед началом'}</p>
         <h2 data-el="title"></h2><p>Посмотри движение и подготовь камеру. Старт — когда будешь готов.</p></div>
       ${this.plan.durationSec ? '<p class="alert alert--good">75 секунд в удобном темпе. Выполняй движение как обычно; намеренные ошибки не нужны. Если отклонение возникнет, исправь его по одной подсказке. Если ошибок нет — это хороший результат.</p>' : ''}
       <p class="preview-readiness" data-el="readiness" role="status"></p>

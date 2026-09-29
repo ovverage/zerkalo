@@ -23,6 +23,7 @@ import { bilateralAngle } from '../vision/measurements';
 import { facingRatio } from '../vision/framing';
 import { mapRange } from '../vision/geometry';
 import { sp } from '../vision/landmarks';
+import { chainConfidence, observe } from '../vision/tracking';
 
 const REQUIRED = [
   'left_shoulder',
@@ -70,17 +71,22 @@ export const squat: ExerciseSpec = {
     const knees = bilateralAngle(b, ['hip', 'knee', 'ankle']);
     const kneeL = knees.both ? knees.left : knees.mean;
     const kneeR = knees.both ? knees.right : knees.mean;
-    const frontal = knees.both && facingRatio(b) > 0.5;
+    const bothVisible = knees.both && observe(b, REQUIRED).ok;
+    const frontal = bothVisible && facingRatio(b) > 0.5;
+    const left = chainConfidence(b, ['left_shoulder', 'left_hip', 'left_knee', 'left_ankle']);
+    const right = chainConfidence(b, ['right_shoulder', 'right_hip', 'right_knee', 'right_ankle']);
+    const side = left >= right ? 'left' : 'right';
+    const shoulder = sp(b, `${side}_shoulder`), hip = sp(b, `${side}_hip`);
     return {
       kneeL,
       kneeR,
       kneeMean: knees.mean,
-      torsoPitch: knees.both ? torsoPitch(b) : 0,
+      torsoPitch: bothVisible ? torsoPitch(b) : 0,
       valgus: frontal ? kneeValgus(b) : 0,
       stance: frontal ? stanceWidth(b) : 1,
       hipOverKnee: hipBelowKnee(b),
-      upright: Math.abs((sp(b, 'left_shoulder').y + sp(b, 'right_shoulder').y - sp(b, 'left_hip').y - sp(b, 'right_hip').y) / 2),
-      horizontal: Math.abs((sp(b, 'left_shoulder').x + sp(b, 'right_shoulder').x - sp(b, 'left_hip').x - sp(b, 'right_hip').x) / 2) * (b.imageAspect ?? 1),
+      upright: Math.abs(shoulder.y - hip.y),
+      horizontal: Math.abs(shoulder.x - hip.x) * (b.imageAspect ?? 1),
     };
   },
 

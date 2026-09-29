@@ -4,6 +4,7 @@ import '../src/styles/layout.css';
 import '../src/styles/components.css';
 import '../src/styles/screens.css';
 import '../src/styles/guidance.css';
+import '../src/styles/handsfree.css';
 import { MenuScreen } from '../src/ui/screens/menu';
 import { PreviewScreen } from '../src/ui/screens/preview';
 import { WorkoutScreen } from '../src/ui/screens/workout';
@@ -14,7 +15,7 @@ import { SoundKit } from '../src/ui/sound';
 const host = document.querySelector<HTMLDivElement>('#ui')!;
 let screen: Screen;
 const app = {
-  coach: new VoiceCoach(), sound: new SoundKit(), hasVision: true, source: 'demo', mirrored: true,
+  coach: new VoiceCoach(), sound: new SoundKit(), hasVision: true, source: 'camera', mirrored: true,
   history: { totals: () => ({ sessions: 0, streakDays: 0 }), add: () => ({ records: [] }) },
   fx: { float: () => {}, burst: () => {} },
   go(route: Route) {

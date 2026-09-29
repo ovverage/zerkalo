@@ -258,7 +258,7 @@ export class WorkoutScreen extends Screen {
     this.setText('[data-el="name"]', spec.name);
     this.setText(
       '[data-el="step"]',
-      out.stepCount > 1 ? `Упражнение ${out.stepIndex + 1} из ${out.stepCount}` : 'Свободная тренировка',
+      this.session.plan.durationSec ? `Исправь движение · ${this.session.plan.durationSec} секунд` : out.stepCount > 1 ? `Упражнение ${out.stepIndex + 1} из ${out.stepCount}` : 'Свободная тренировка',
     );
     this.setText(
       '[data-el="of"]',
