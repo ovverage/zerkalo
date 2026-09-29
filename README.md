@@ -12,6 +12,8 @@
 
 **Публичная веб-версия:** [открыть тренажёр](https://ovverage.github.io/zerkalo/app/) · [страница проекта](https://ovverage.github.io/zerkalo/). Работает по HTTPS без входа в GitHub.
 
+**Android 1.1.0:** [скачать APK](https://github.com/ovverage/zerkalo/releases/download/v1.1.0/zerkalo-1.1.0.apk) · [релиз и SHA-256](https://github.com/ovverage/zerkalo/releases/tag/v1.1.0) · [инструкция](docs/android.md). Android 7.0+, около 57 МиБ; debug-сборка для прямой установки.
+
 **Локальная сборка:** [localhost:4173/app/](http://localhost:4173/app/).
 
 [Запуск](#быстрый-запуск) · [Управление](#движение--действие--обратная-связь) · [Режим ошибки](#режим-ошибка-и-исправление) · [Архитектура](docs/architecture.md) · [Проверки](docs/verification.md) · [Сценарий видео](docs/demo-script.md)
@@ -196,7 +198,7 @@ npm run verify:release
 
 Владелец разрешил публичный репозиторий и GitHub Pages 29 сентября 2026. [Публикация](.github/workflows/pages.yml) запускается вручную на `main` по [официальной схеме GitHub](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages). Она повторяет проверки и загружает только `dist/`; обычный push сайт не публикует.
 
-## Android (дополнительно)
+## Android
 
 Основная сдача — браузер. Для Android нужны JDK 21, Android SDK API 36 и Node.js 22+:
 
@@ -204,7 +206,7 @@ npm run verify:release
 npm run android:apk
 ```
 
-Скрипт учитывает `JAVA_HOME` / `ANDROID_HOME` и ищет локальный toolchain. Результат — `dist/zerkalo.apk`, debug APK для проверки, не релиз магазина. Android 7.0+ и современный WebView; модели и ролики включаются внутрь. Сборка сайта сама не добавляет старый APK; актуальный APK можно приложить явно после его пересборки.
+Скрипт учитывает `JAVA_HOME` / `ANDROID_HOME` и ищет локальный toolchain. Результат — `dist/zerkalo.apk`, debug APK для проверки, не релиз магазина. Android 7.0+ и современный WebView; модели и ролики включаются внутрь. Лендинг ссылается на опубликованный GitHub Release, записанный в `scripts/android-release.json`; APK не дублируется в Pages. При необходимости локальный APK можно приложить явно после пересборки через `node scripts/build-landing.mjs --with-apk`.
 
 ## Решение проблем
 

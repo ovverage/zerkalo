@@ -3,8 +3,8 @@
  *
  * Лендинг — статическая страница: ни зависимостей, ни логики, гонять её через
  * бандлер незачем. Скрипт делает три вещи, которые копированием не решаются:
- * кладёт рядом шрифт, подставляет блок скачивания APK в зависимости от того,
- * собран ли он, и переносит сам APK.
+ * кладёт рядом шрифт, подставляет ссылку на опубликованный APK; по явному флагу
+ * вместо неё прикладывает локальный APK.
  */
 
 import { access, copyFile, cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
@@ -46,22 +46,27 @@ for (const subset of FONT_SUBSETS) {
 // ссылка на лендинге хуже, чем честная строка о том, где взять сборку.
 const hasApk = process.argv.includes('--with-apk') && await exists(APK_SOURCE);
 if (hasApk) await copyFile(APK_SOURCE, APK_TARGET);
+const release = JSON.parse(await readFile(new URL('./android-release.json', import.meta.url), 'utf8'));
+const releaseUrl = `https://github.com/ovverage/zerkalo/releases/download/v${release.version}/zerkalo-${release.version}.apk`;
+if (!/^\d+\.\d+\.\d+$/.test(release.version) || release.url !== releaseUrl) {
+  throw new Error('Некорректный адрес опубликованной Android-сборки');
+}
 
 const apkBlock = hasApk
   ? `<a class="btn" href="./zerkalo.apk" download>
             Скачать APK
             <span class="btn__sub">Android 7.0 и новее</span>
           </a>`
-  : `<span class="btn btn--muted" title="APK собирается командой npm run android:apk">
-            Android-версия
-            <span class="btn__sub">собирается из исходников</span>
-          </span>`;
+  : `<a class="btn" href="${release.url}">
+            Скачать APK ${release.version}
+            <span class="btn__sub">Android 7.0+ · ${Math.round(release.sizeBytes / 1024 / 1024)} МБ</span>
+          </a>`;
 
 const page = `${DIST}/index.html`;
 const html = await readFile(page, 'utf8');
 await writeFile(page, html.replace('<!--APK-->', apkBlock));
 
-console.log(`лендинг собран в ${DIST}/ (APK: ${hasApk ? 'приложен' : 'не собран'})`);
+console.log(`лендинг собран в ${DIST}/ (APK: ${hasApk ? 'приложен' : `GitHub Release ${release.version}`})`);
 
 // Ссылка на репозиторий — единственное место на лендинге, которое нельзя
 // заполнить из кода. Предупреждаем, чтобы заглушка не уехала в деплой.
