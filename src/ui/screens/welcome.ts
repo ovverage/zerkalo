@@ -64,12 +64,12 @@ export class WelcomeScreen extends Screen {
               <span class="loader__pct" data-el="pct"></span>
             </div>
             <div class="loader__track"><i data-el="fill"></i></div>
-            <p class="loader__note">Файлы кэшируются — со второго раза запуск мгновенный.</p>
+            <p class="loader__note">Первый запуск может занять до 45 секунд. Файлы сохраняются в кэше браузера.</p>
           </div>
 
           <div class="row row--buttons" data-el="buttons">
             <button class="btn btn--primary" data-action="camera">Включить камеру</button>
-            <button class="btn btn--ghost" data-action="demo">Демо без камеры</button>
+            <button class="btn btn--ghost" data-action="demo">Демо · симуляция без камеры</button>
           </div>
 
           <p class="note">
@@ -118,7 +118,7 @@ export class WelcomeScreen extends Screen {
       return;
     }
 
-    this.app.go(loadPrefs().tutorialDone ? { name: 'menu' } : { name: 'tutorial' });
+    this.app.go(kind === 'demo' || loadPrefs().tutorialDone ? { name: 'menu' } : { name: 'tutorial' });
   }
 
   private showProgress(p: LoadProgress): void {

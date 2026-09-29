@@ -90,3 +90,14 @@ test('Heavy становится новой настройкой по умолч
     else Reflect.deleteProperty(globalThis, 'localStorage');
   }
 });
+
+test('зависшая загрузка Worker заканчивается ошибкой и освобождает ожидание', async () => {
+  const restore = environment();
+  const detector = new PoseDetector(15);
+  const original = FakeWorker.prototype.postMessage;
+  FakeWorker.prototype.postMessage = function(data: unknown) { this.messages.push(data); };
+  try {
+    await assert.rejects(detector.load('heavy'), /не запустилась/);
+    assert.equal(detector.detect({ currentTime: 1, videoWidth: 1280 } as HTMLVideoElement, performance.now()), null);
+  } finally { FakeWorker.prototype.postMessage = original; detector.close(); restore(); }
+});

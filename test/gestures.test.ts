@@ -92,3 +92,38 @@ test('кнопка выбирается только удержанием кис
   const handsUp = Array.from({ length: 120 }, () => ({ armElevation: 180 }) as PoseParams);
   assert.deepEqual(fired(handsUp, [button]).activated, [], 'поднятая рука не попадает на кнопку');
 });
+
+test('удержанный жест не запускает цепочку экранов даже после сброса экрана и потери позы', () => {
+  const engine = new GestureEngine();
+  const opts = { container: CONTAINER, targets: [], mirrored: true };
+  const events: string[] = [];
+  for (let t = 0; t < 9000; t += FRAME_MS) {
+    const body = t > 2500 && t < 3100 ? null : pose({ armElevation: 180 });
+    const frame = engine.update(body, t, opts);
+    if (frame.fired) { events.push(frame.fired); engine.clearCooldown(); }
+  }
+  assert.deepEqual(events, ['confirm']);
+  for (let t = 9000; t < 9600; t += FRAME_MS) engine.update(pose(), t, opts);
+  for (let t = 9600; t < 11000; t += FRAME_MS) {
+    const frame = engine.update(pose({ armElevation: 180 }), t, opts);
+    if (frame.fired) events.push(frame.fired);
+  }
+  assert.deepEqual(events, ['confirm', 'confirm']);
+});
+
+test('кисть достигает одинаковой кнопки после смещения человека и на узком экране', () => {
+  const engine = new GestureEngine();
+  const b = pose({ armElevation: 85 });
+  // Оставляем поднятой одну кисть, другая опущена: это выбор, а не подтверждение.
+  const neutral = pose();
+  const rightWrist = 16;
+  b.world[rightWrist] = neutral.world[rightWrist]!;
+  b.screen[rightWrist] = neutral.screen[rightWrist]!;
+  const opts = { container: { left: 0, top: 0, width: 390, height: 844 } as DOMRect, targets: [], mirrored: true };
+  const first = engine.update(b, 0, opts).cursor;
+  const moved = { ...b, screen: b.screen.map(p => ({ ...p, x: p.x * .7 + .24, y: p.y * .7 + .1 })) };
+  const second = engine.update(moved, 100, opts).cursor;
+  assert.ok(first && second);
+  assert.ok(Math.abs(first.x - second.x) < .01);
+  assert.ok(Math.abs(first.y - second.y) < .01);
+});

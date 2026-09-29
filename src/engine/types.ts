@@ -92,6 +92,8 @@ export interface MetricExtent {
 
 /** Накопленные данные одного повторения на момент его завершения. */
 export interface RepDraft {
+  /** Метрики возврата; старый экстремум из подготовки не заменяет завершение. */
+  endMetrics: Metrics;
   index: number;
   side: Side | null;
   startedAt: number;

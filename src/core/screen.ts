@@ -74,6 +74,7 @@ export interface DrawHints {
 
 export abstract class Screen {
   protected root!: HTMLElement;
+  get demoMotion(): import('../demo/simulation').DemoMotion | null { return null; }
 
   /**
    * Разрешён ли выбор кнопок удержанием кисти. Во время упражнения его нужно
@@ -81,6 +82,10 @@ export abstract class Screen {
    */
   get dwellEnabled(): boolean {
     return true;
+  }
+
+  get gestureHint(): string {
+    return 'Кисть → выбор · обе руки вверх → подтвердить · руки крестом → назад';
   }
 
   constructor(protected readonly app: AppApi) {}

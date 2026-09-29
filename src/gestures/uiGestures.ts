@@ -20,7 +20,6 @@
 
 import type { Body } from '../vision/landmarks';
 import { height, lateral, sp, vis } from '../vision/landmarks';
-import { containTransform } from '../vision/viewport';
 import { clamp } from '../vision/geometry';
 
 export type GestureName = 'confirm' | 'cancel';
@@ -42,6 +41,8 @@ export interface CursorPoint {
 }
 
 export interface GestureFrame {
+  /** После команды надо опустить руки. Потеря позы не считается отпусканием. */
+  needsRelease?: boolean;
   cursor: CursorPoint | null;
   /** Заполнение кольца выбора, 0..1. */
   dwell: number;
@@ -72,7 +73,7 @@ const DWELL_DECAY = 2.6;
 /** Пауза после любого жеста, чтобы одно движение не сработало дважды. */
 const GLOBAL_COOLDOWN_MS = 1300;
 /** Курсором управляет только поднятая кисть. */
-const CURSOR_MIN_HEIGHT = -0.12;
+const CURSOR_MIN_HEIGHT = 0;
 const EMPTY: GestureFrame = {
   cursor: null,
   dwell: 0,
@@ -90,11 +91,23 @@ export class GestureEngine {
   private dwellId: string | null = null;
   private dwellValue = 0;
   private lastFiredAt = -Infinity;
+  private armed = true;
+  private neutralSince: number | null = null;
 
   update(body: Body | null, t: number, opts: GestureOptions): GestureFrame {
     if (!body || (body.sampleId !== undefined && t - body.t > 250)) {
       this.reset();
-      return EMPTY;
+      this.neutralSince = null;
+      return { ...EMPTY, needsRelease: !this.armed };
+    }
+
+    const cursor = this.cursorFor(body, opts);
+    if (!this.armed) {
+      const neutral = !isHandsUp(body) && !isArmsCrossed(body) && !cursor;
+      this.neutralSince = neutral ? this.neutralSince ?? t : null;
+      if (this.neutralSince !== null && t - this.neutralSince >= 250) this.armed = true;
+      this.reset();
+      return { ...EMPTY, cursor, needsRelease: !this.armed };
     }
 
     const cooling = t - this.lastFiredAt < GLOBAL_COOLDOWN_MS;
@@ -111,10 +124,8 @@ export class GestureEngine {
       return { ...EMPTY, fired: 'cancel' };
     }
 
-    const cursor = this.cursorFor(body, opts);
-
     const dwell =
-      opts.dwellEnabled === false || cooling
+      opts.dwellEnabled === false || cooling || confirm.progress > 0 || cancel.progress > 0
         ? { dwell: 0, targetId: null, activated: null }
         : this.updateDwell(cursor, opts, t, body.dt);
 
@@ -141,14 +152,15 @@ export class GestureEngine {
     this.dwellValue = 0;
   }
 
-  /** Сбросить только кулдаун — при смене экрана. */
+  /** Новый экран не даёт удерживаемому жесту запустить следующую команду. */
   clearCooldown(): void {
-    this.lastFiredAt = -Infinity;
     this.reset();
   }
 
   private fire(t: number): void {
     this.lastFiredAt = t;
+    this.armed = false;
+    this.neutralSince = null;
     this.reset();
   }
 
@@ -176,11 +188,19 @@ export class GestureEngine {
     if (vis(body, pick.name) < 0.5) return null;
 
     const p = sp(body, pick.name);
-    const x = opts.mirrored ? 1 - p.x : p.x;
-    const aspect = body.imageAspect;
-    if (!aspect) return { x: x * opts.container.width, y: p.y * opts.container.height };
-    const tf = containTransform(aspect, 1, opts.container.width, opts.container.height);
-    return { x: tf.dx + x * aspect * tf.scale, y: tf.dy + p.y * tf.scale };
+    const ls = sp(body, 'left_shoulder'), rs = sp(body, 'right_shoulder');
+    const lh = sp(body, 'left_hip'), rh = sp(body, 'right_hip');
+    const cx = (ls.x + rs.x) / 2, cy = (ls.y + rs.y) / 2;
+    const aspect = body.imageAspect ?? 1;
+    const torso = Math.hypot((cx - (lh.x + rh.x) / 2) * aspect, cy - (lh.y + rh.y) / 2);
+    if (torso < 0.035) return null;
+    // Относительно плеч, а не края видео: весь экран доступен и в углу кадра,
+    // и на телефоне с полосами вокруг горизонтального изображения камеры.
+    const dx = (p.x - cx) * aspect / torso * (opts.mirrored ? -1 : 1);
+    return {
+      x: clamp(0.5 + dx / 2.4, 0.015, 0.985) * opts.container.width,
+      y: clamp(0.48 + (p.y - cy) / torso / 1.9, 0.015, 0.985) * opts.container.height,
+    };
   }
 
   private updateDwell(

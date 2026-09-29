@@ -63,7 +63,7 @@ export class SkeletonOverlay {
   draw(body: Body, video: HTMLVideoElement, opts: DrawOptions): void {
     const { ctx } = this;
 
-    const tf = containTransform(video.videoWidth, video.videoHeight, this.width, this.height);
+    const tf = containTransform((video.videoWidth || 1000), (video.videoHeight || 1000), this.width, this.height);
     const project = (name: LandmarkName): { x: number; y: number; v: number } | null => {
       const i = LANDMARK_INDEX[name];
       const p = body.screen[i];
@@ -71,8 +71,8 @@ export class SkeletonOverlay {
       if (!p) return null;
       const nx = opts.mirrored ? 1 - p.x : p.x;
       return {
-        x: tf.dx + nx * video.videoWidth * tf.scale,
-        y: tf.dy + p.y * video.videoHeight * tf.scale,
+        x: tf.dx + nx * (video.videoWidth || 1000) * tf.scale,
+        y: tf.dy + p.y * (video.videoHeight || 1000) * tf.scale,
         v,
       };
     };
@@ -133,9 +133,9 @@ export class SkeletonOverlay {
   drawGuide(ok: boolean, box: Box | null, video: HTMLVideoElement): void {
     if (!box || box.width <= 0 || box.height <= 0) return;
     const { ctx } = this;
-    const tf = containTransform(video.videoWidth, video.videoHeight, this.width, this.height);
-    const width = video.videoWidth * tf.scale;
-    const height = video.videoHeight * tf.scale;
+    const tf = containTransform((video.videoWidth || 1000), (video.videoHeight || 1000), this.width, this.height);
+    const width = (video.videoWidth || 1000) * tf.scale;
+    const height = (video.videoHeight || 1000) * tf.scale;
     const x = tf.dx + (this.mirroredBox ? 1 - box.right : box.left) * width;
     const y = tf.dy + box.top * height;
     ctx.save();

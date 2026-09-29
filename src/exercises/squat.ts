@@ -22,6 +22,7 @@ import {
 import { bilateralAngle } from '../vision/measurements';
 import { facingRatio } from '../vision/framing';
 import { mapRange } from '../vision/geometry';
+import { sp } from '../vision/landmarks';
 
 const REQUIRED = [
   'left_shoulder',
@@ -74,16 +75,20 @@ export const squat: ExerciseSpec = {
       kneeL,
       kneeR,
       kneeMean: knees.mean,
-      torsoPitch: torsoPitch(b),
+      torsoPitch: knees.both ? torsoPitch(b) : 0,
       valgus: frontal ? kneeValgus(b) : 0,
       stance: frontal ? stanceWidth(b) : 1,
       hipOverKnee: hipBelowKnee(b),
+      upright: Math.abs((sp(b, 'left_shoulder').y + sp(b, 'right_shoulder').y - sp(b, 'left_hip').y - sp(b, 'right_hip').y) / 2),
+      horizontal: Math.abs((sp(b, 'left_shoulder').x + sp(b, 'right_shoulder').x - sp(b, 'left_hip').x - sp(b, 'right_hip').x) / 2) * (b.imageAspect ?? 1),
     };
   },
 
   progress(m) {
     return mapRange(m['kneeMean'] ?? KNEE_STRAIGHT, KNEE_STRAIGHT, KNEE_PARALLEL);
   },
+  inPosition: (m) => (m['upright'] ?? 0) > (m['horizontal'] ?? 0) * 0.5,
+  positionHint: 'Для приседа встань на ноги. Поставь камеру примерно вертикально, чтобы были видны плечи, таз, колени и стопы.',
 
   liveRules: [
     stallRule('Приседай заметно глубже — такое движение я не считаю за повторение. Согни колени хотя бы до 130°.'),
@@ -100,7 +105,7 @@ export const squat: ExerciseSpec = {
         const v = ctx.m['valgus'] ?? 0;
         if (v <= 0.34) return null;
         return {
-          hint: 'Колени заваливаются внутрь — разводи их наружу, в сторону носков. Это главная причина травмы колена.',
+          hint: 'Колени сходятся внутрь — направляй их в сторону носков и сохраняй устойчивую опору.',
           value: v,
         };
       },

@@ -3,14 +3,20 @@ import type { Body } from './landmarks';
 import { PoseEngine } from './poseEngine';
 import type { ProgressHandler, LoadProgress } from './poseEngine';
 import type { ModelQuality } from '../storage/prefs';
+import { InferenceMeter } from './inferenceMeter';
 export type { ProgressHandler, LoadProgress, LoadPhase } from './poseEngine';
 
 export class PoseDetector {
+  readonly meter = new InferenceMeter();
+  failure: string | null = null;
+  private frameStartedAt = 0;
+  constructor(private readonly loadTimeoutMs = 45000) {}
   private worker: Worker | null = null;
   private fallback: PoseEngine | null = null;
   private cached: Body | null = null;
   private busy = false;
   private ready = false;
+  get isReady(): boolean { return this.ready; }
   private lastVideoTime = -1;
   private generation = 0;
   private requestId = 0;
@@ -21,14 +27,23 @@ export class PoseDetector {
     const wasReady = this.ready;
     this.ready = false;
     this.cached = null;
+    this.failure = null;
     try {
       if (typeof Worker !== 'undefined' && typeof OffscreenCanvas !== 'undefined' && typeof createImageBitmap === 'function') {
         if (!this.worker) this.startWorker();
         const id = ++this.requestId;
+        let timer: ReturnType<typeof setTimeout>;
         await new Promise<void>((resolve, reject) => {
           this.pending = { id, resolve, reject, progress: onProgress };
+          timer = setTimeout(() => {
+            this.pending = null;
+            this.worker?.terminate();
+            this.worker = null;
+            this.failure = 'Время загрузки модели истекло. Выбери Lite или перезапусти камеру.';
+            reject(new Error('Модель не запустилась за 45 секунд. Проверь соединение и попробуй ещё раз или открой симуляцию.'));
+          }, this.loadTimeoutMs);
           this.worker!.postMessage({ type: 'load', id, base: this.base, quality });
-        });
+        }).finally(() => clearTimeout(timer));
       } else {
         this.fallback ??= new PoseEngine(this.base);
         await this.fallback.load(quality, onProgress);
@@ -43,9 +58,20 @@ export class PoseDetector {
 
   detect(video: HTMLVideoElement, now: number): Body | null {
     if (!this.ready) return null;
-    if (this.fallback) return this.fallback.detect(video, now);
+    if (this.fallback) {
+      const completed = this.fallback.completedResults;
+      const body = this.fallback.detect(video, now);
+      if (this.fallback.completedResults !== completed) this.meter.result(performance.now());
+      return body;
+    }
+    if (this.busy && now - this.frameStartedAt > 8000) {
+      this.close();
+      this.failure = 'Распознавание перестало отвечать. Перезапусти камеру или выбери более лёгкую модель в библиотеке упражнений.';
+      return null;
+    }
     if (!this.busy && video.currentTime !== this.lastVideoTime && video.videoWidth > 0) {
       this.busy = true;
+      this.frameStartedAt = now;
       this.lastVideoTime = video.currentTime;
       const worker = this.worker;
       const generation = this.generation;
@@ -63,6 +89,7 @@ export class PoseDetector {
     this.generation++;
     this.cached = null;
     this.lastVideoTime = -1;
+    this.meter.reset();
     this.fallback?.reset();
     this.worker?.postMessage({ type: 'reset' });
   }
@@ -87,6 +114,7 @@ export class PoseDetector {
       if (data.type === 'result') {
         this.busy = false;
         if (data.generation === this.generation) {
+          this.meter.result(performance.now());
           // UI time starts at delivery; no queued old frames can accumulate.
           this.cached = data.body ? { ...data.body, t: performance.now() } : null;
         }
@@ -101,6 +129,7 @@ export class PoseDetector {
       }
     };
     this.worker.onerror = () => {
+      this.failure = 'Распознавание остановилось. Обнови браузер или выбери модель Lite в библиотеке упражнений.';
       this.pending?.reject(new Error('Не удалось запустить распознавание в фоне. Обнови браузер.'));
       this.pending = null;
       this.busy = false;

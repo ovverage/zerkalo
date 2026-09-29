@@ -139,7 +139,7 @@ export class RepCounter {
 
       case 'bottom':
         if (progress <= thr.reset) {
-          completed = this.endRep(t);
+          completed = this.endRep(t, m);
           this.setPhase('top', t);
         } else if (progress < thr.attempt - ASCENT_MARGIN) this.setPhase('ascent', t);
         break;
@@ -148,7 +148,7 @@ export class RepCounter {
         if (progress >= thr.attempt) {
           this.setPhase('bottom', t); // «доработка» на подъёме — то же повторение
         } else if (progress <= thr.reset) {
-          completed = this.endRep(t);
+          completed = this.endRep(t, m);
           this.setPhase('top', t);
         }
         break;
@@ -243,7 +243,7 @@ export class RepCounter {
     this.liveViolations = new Set();
   }
 
-  private endRep(t: number): RepDraft | null {
+  private endRep(t: number, m: Metrics): RepDraft | null {
     if (!this.active) return null;
     if (t - this.repStartedAt < 180) {
       this.discardRep();
@@ -251,6 +251,7 @@ export class RepCounter {
     }
     this.repIndex += 1;
     const draft: RepDraft = {
+      endMetrics: { ...m },
       index: this.repIndex,
       side: this.sideAtPeak,
       startedAt: this.repStartedAt,

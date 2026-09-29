@@ -21,7 +21,7 @@ export class CameraError extends Error {
 const MESSAGES: Record<CameraFailure, string> = {
   denied:
     'Браузер заблокировал камеру. Нажмите на иконку камеры в адресной строке и разрешите доступ, затем обновите страницу.',
-  'not-found': 'Камера не найдена. Подключите камеру или откройте демо-режим — он работает на записи.',
+  'not-found': 'Камера не найдена. Подключите камеру или откройте деморежим — он показывает симуляцию.',
   'in-use': 'Камера занята другим приложением. Закройте Zoom, Meet или Skype и попробуйте снова.',
   'insecure-context':
     'Камера доступна только по HTTPS или на localhost. Откройте страницу по защищённому адресу.',
@@ -44,7 +44,7 @@ export async function startCamera(video: HTMLVideoElement): Promise<CameraStart>
 
   let stream: MediaStream;
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
+    const request = navigator.mediaDevices.getUserMedia({
       audio: false,
       video: {
         facingMode: 'user',
@@ -53,42 +53,32 @@ export async function startCamera(video: HTMLVideoElement): Promise<CameraStart>
         frameRate: { ideal: 30, max: 60 },
       },
     });
+    let expired = false;
+    let timer: ReturnType<typeof setTimeout>;
+    stream = await Promise.race([
+      request.then(result => {
+        if (expired) stopCamera(result);
+        return result;
+      }),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          expired = true;
+          reject(new CameraError('unknown', 'Нет ответа на запрос камеры за 30 секунд. Разреши доступ в браузере и попробуй снова; также доступна симуляция.'));
+        }, 30000);
+      }),
+    ]).finally(() => clearTimeout(timer));
   } catch (err) {
+    if (err instanceof CameraError) throw err;
     throw new CameraError(classify(err), MESSAGES[classify(err)]);
   }
 
   video.srcObject = stream;
   video.muted = true;
   video.playsInline = true;
-  await video.play();
-  await waitForFrame(video);
+  try { await Promise.all([video.play(), waitForFrame(video)]); }
+  catch (error) { stopCamera(stream); video.srcObject = null; throw error; }
   return { video, stream };
 }
-
-/**
- * Демо-режим: тот же конвейер распознавания, но источник кадров — записанное
- * видео из репозитория. Нужен, если у проверяющего нет камеры или он не может
- * дать к ней доступ: приложение всё равно можно пройти целиком.
- */
-export async function startDemoVideo(video: HTMLVideoElement, src: string): Promise<CameraStart> {
-  video.srcObject = null;
-  video.loop = true;
-  video.muted = true;
-  video.playsInline = true;
-
-  const ready = waitForFrame(video, DEMO_MISSING);
-  video.src = src;
-  // play() отклоняется раньше, чем элемент успевает сообщить о причине, поэтому
-  // отказ здесь гасим: решение принимает waitForFrame по событиям самого
-  // элемента. Иначе получаются два источника отказа и один висящий промис.
-  void video.play().catch(() => undefined);
-  await ready;
-  return { video, stream: new MediaStream() };
-}
-
-const DEMO_MISSING =
-  'Демо-ролик не найден: положите файл записи в public/demo/demo.mp4 (см. README). ' +
-  'Либо нажмите «Включить камеру» — основной режим работает без него.';
 
 export function stopCamera(stream: MediaStream | null): void {
   stream?.getTracks().forEach((t) => t.stop());

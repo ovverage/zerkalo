@@ -18,6 +18,8 @@ import { FormAnalyzer } from './formAnalyzer';
 import { HoldTracker } from './holdTracker';
 import { RepCounter } from './repCounter';
 import type { ExerciseSpec, FrameContext, RepRecord, ScoredViolation, Side } from './types';
+import { CorrectionTracker } from './corrections';
+import type { Correction } from './corrections';
 
 export type SessionState = 'idle' | 'setup' | 'countdown' | 'running' | 'rest' | 'paused' | 'done';
 
@@ -31,12 +33,14 @@ const DEFAULT_WEIGHT_KG = 70;
 const POSITION_SPEAK_COOLDOWN_MS = 10_000;
 
 export interface RepEvent {
+  corrections: readonly Correction[];
   rec: RepRecord;
   /** Самое важное нарушение — его показываем и озвучиваем. */
   feedback: ScoredViolation | null;
 }
 
 export interface FrameOutcome {
+  remainingSec?: number;
   state: SessionState;
   spec: ExerciseSpec | null;
   ctx: FrameContext | null;
@@ -65,6 +69,7 @@ export interface Mistake {
 }
 
 export interface ExerciseResult {
+  fixedErrors: number;
   exerciseId: string;
   name: string;
   icon: string;
@@ -83,6 +88,9 @@ export interface ExerciseResult {
 }
 
 export interface SessionResult {
+  fixedErrors: number;
+  challenge: boolean;
+  source?: 'camera' | 'simulation';
   workoutId: string;
   workoutName: string;
   startedAt: number;
@@ -99,6 +107,7 @@ export interface SessionResult {
 
 /** Состояние одного шага программы во время выполнения. */
 interface ActiveStep {
+  corrections: CorrectionTracker;
   step: WorkoutStep;
   spec: ExerciseSpec;
   counter: RepCounter;
@@ -128,6 +137,8 @@ export class WorkoutSession {
   private results: ExerciseResult[] = [];
   private stateBeforePause: SessionState = 'setup';
   private lastOutcome: FrameOutcome | null = null;
+  private activeMs = 0;
+  private lastTickAt: number | null = null;
 
   constructor(
     readonly plan: WorkoutPlan,
@@ -150,15 +161,25 @@ export class WorkoutSession {
     this.startedAt = t;
     this.stepIndex = 0;
     this.results = [];
+    this.activeMs = 0;
+    this.lastTickAt = t;
     this.openStep(t);
   }
 
   /** Главный вход: вызывается на каждом кадре видео. */
   update(body: Body | null, t: number, brightness: number | null): FrameOutcome {
+    if (this.state === 'running' && this.lastTickAt !== null) {
+      this.activeMs += Math.max(0, Math.min(t - this.lastTickAt, 250));
+    }
+    this.lastTickAt = t;
+    if (this.plan.durationSec && this.activeMs >= this.plan.durationSec * 1000 && this.state !== 'done') {
+      this.finish(t);
+      return this.emptyOutcome();
+    }
     const cached = this.lastOutcome;
     if (body?.sampleId !== undefined && body.sampleId === this.active?.lastSampleId &&
         t - body.t <= 250 && this.state === 'running' && cached?.state === 'running') {
-      return { ...cached, repEvent: null, message: cached.message ? { ...cached.message, speak: false } : null };
+      return { ...cached, remainingSec: this.remainingSec(), repEvent: null, message: cached.message ? { ...cached.message, speak: false } : null };
     }
     const out = this.updateFrame(body, t, brightness);
     this.lastOutcome = out;
@@ -259,7 +280,7 @@ export class WorkoutSession {
       step.qualities.push(withSide.quality);
       if (withSide.counted) step.counted += 1;
       for (const v of withSide.violations) this.recordMistake(step, v);
-      repEvent = { rec: withSide, feedback: step.analyzer.repFeedback(withSide) };
+      repEvent = { rec: withSide, feedback: step.analyzer.repFeedback(withSide), corrections: step.corrections.observe(withSide) };
     }
 
     if (step.counted >= step.step.target) {
@@ -283,6 +304,7 @@ export class WorkoutSession {
 
   resume(t: number): void {
     if (this.state !== 'paused') return;
+    this.lastTickAt = t;
     // После паузы возвращаемся к проверке кадра: человек мог отойти.
     this.setState(this.stateBeforePause === 'running' ? 'setup' : this.stateBeforePause, t);
     if (this.active) this.active.framingOkSince = null;
@@ -323,6 +345,7 @@ export class WorkoutSession {
     this.active = {
       step,
       spec,
+      corrections: new CorrectionTracker(),
       counter: new RepCounter(spec),
       analyzer: new FormAnalyzer(spec),
       hold: new HoldTracker(),
@@ -354,6 +377,7 @@ export class WorkoutSession {
         : 0;
 
     this.results.push({
+      fixedErrors: step.corrections.count,
       exerciseId: step.spec.id,
       name: step.spec.name,
       icon: step.spec.icon,
@@ -500,6 +524,7 @@ export class WorkoutSession {
 
     return {
       state: this.state,
+      remainingSec: this.remainingSec(),
       spec: step.spec,
       ctx,
       message,
@@ -543,12 +568,12 @@ export class WorkoutSession {
       .filter((r) => r.mode === 'hold')
       .reduce((a, r) => a + r.done, 0);
 
-    const graded = this.results.filter((r) => r.avgQuality > 0 || r.done > 0);
+    const graded = this.results.filter((r) => r.attempts > 0 || r.done > 0);
     const avgQuality = graded.length
       ? Math.round(graded.reduce((a, r) => a + r.avgQuality, 0) / graded.length)
       : 0;
 
-    const completion = this.results.length
+    const completion = this.plan.durationSec ? (totalReps > 0 ? Math.min(this.activeMs / (this.plan.durationSec * 1000), 1) : 0) : this.results.length
       ? this.results.reduce((a, r) => a + Math.min(r.done / Math.max(r.target, 1), 1), 0) /
         this.results.length
       : 0;
@@ -563,6 +588,8 @@ export class WorkoutSession {
     }
 
     return {
+      fixedErrors: this.results.reduce((sum, result) => sum + result.fixedErrors, 0),
+      challenge: !!this.plan.durationSec,
       workoutId: this.plan.id,
       workoutName: this.plan.name,
       startedAt: this.startedAt,
@@ -575,5 +602,9 @@ export class WorkoutSession {
       score: Math.round(0.6 * avgQuality + 0.4 * completion * 100),
       topMistakes: [...merged.values()].sort((a, b) => b.count - a.count).slice(0, 3),
     };
+  }
+
+  private remainingSec(): number | undefined {
+    return this.plan.durationSec ? Math.max(0, Math.ceil(this.plan.durationSec - this.activeMs / 1000)) : undefined;
   }
 }

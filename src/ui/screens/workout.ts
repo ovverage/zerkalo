@@ -32,6 +32,15 @@ export class WorkoutScreen extends Screen {
   private quitAskedAt = -Infinity;
   private helpOpen = false;
   private resumeAfterHelp = false;
+  private frameTime = 0;
+  private get now(): number { return this.frameTime || performance.now(); }
+  private feedbackUntil = 0;
+  private feedbackText = '';
+  private feedbackTone = '';
+
+  override get demoMotion() {
+    return { exerciseId: this.session.currentSpec?.id ?? 'squat', running: this.session.currentState === 'running' };
+  }
 
   constructor(
     app: AppApi,
@@ -42,7 +51,7 @@ export class WorkoutScreen extends Screen {
   }
 
   override get dwellEnabled(): boolean {
-    if (this.helpOpen) return false;
+    if (this.helpOpen) return true;
     // Курсор — это кисть человека. Пока он встаёт перед камерой, ждёт отсчёта
     // или выполняет упражнение, поднятая рука не означает «нажми кнопку»: так
     // можно случайно завершить тренировку, ничего не сделав. Выбор кнопок
@@ -50,6 +59,14 @@ export class WorkoutScreen extends Screen {
     // интерфейсу, — на паузе и на отдыхе. Мышью кнопки доступны всегда.
     const state = this.session.currentState;
     return state === 'paused' || state === 'rest';
+  }
+
+  override get gestureHint(): string {
+    if (this.helpOpen) return 'Руки крестом или обе вверх → закрыть помощь';
+    if (this.dwellEnabled) return 'Кисть → помощь или действие · обе руки вверх → продолжить';
+    return this.session.currentSpec?.view === 'side'
+      ? 'Для паузы безопасно встань лицом к камере и скрести руки на груди'
+      : 'Скрести руки на груди → пауза и помощь';
   }
 
   protected override template(): string {
@@ -83,6 +100,7 @@ export class WorkoutScreen extends Screen {
         </div>
 
         <div class="counter" data-el="counter">
+          <div class="challenge-clock" data-el="challenge-clock"></div>
           <div class="counter__value" data-el="done">0</div>
           <div class="counter__of" data-el="of"></div>
           <div class="counter__bar"><i data-el="bar"></i></div>
@@ -106,10 +124,10 @@ export class WorkoutScreen extends Screen {
 
   protected override actions(): Record<string, () => void> {
     return {
-      pause: () => this.session.togglePause(performance.now()),
-      skip: () => this.session.skip(performance.now()),
+      pause: () => this.session.togglePause(this.now),
+      skip: () => this.session.skip(this.now),
       quit: () => this.confirmQuit(),
-      resume: () => this.session.resume(performance.now()),
+      resume: () => this.session.resume(this.now),
       help: () => this.openHelp(),
       'close-help': () => this.closeHelp(),
       voice: () => this.toggleVoice(),
@@ -126,6 +144,7 @@ export class WorkoutScreen extends Screen {
   }
 
   override update(frame: ScreenFrame): DrawHints {
+    this.frameTime = frame.t;
     if (!this.started) {
       this.session.start(frame.t);
       this.started = true;
@@ -144,7 +163,7 @@ export class WorkoutScreen extends Screen {
     this.q('[data-el="tracking"]')?.classList.toggle('tracking-status--searching', !tracked);
     this.renderHead(out);
     this.renderCounter(out);
-    this.renderHint(out);
+    this.renderHint(out, frame.t);
     this.renderPanel(out);
     if (!this.helpOpen) this.handleEvents(out, frame);
 
@@ -167,11 +186,10 @@ export class WorkoutScreen extends Screen {
   }
 
   override onGesture(gesture: GestureName): void {
-    if (this.helpOpen) return;
-    const t = performance.now();
+    if (this.helpOpen) { this.closeHelp(); return; }
+    const t = this.now;
     switch (gesture) {
       case 'cancel':
-        if (this.session.currentSpec?.view === 'side' && this.session.currentState === 'running') break;
         this.session.togglePause(t);
         break;
       case 'confirm':
@@ -192,13 +210,13 @@ export class WorkoutScreen extends Screen {
     const dialog = this.q<HTMLDialogElement>('[data-el="help"]');
     if (!spec || !dialog) return;
     this.resumeAfterHelp = this.session.currentState !== 'paused';
-    this.session.pause(performance.now());
+    this.session.pause(this.now);
     this.app.coach.stop();
     this.helpOpen = true;
     stopGuideVideos(this.root);
     dialog.innerHTML = `<header class="guide-dialog__head"><div><p class="guide-eyebrow">Тренировка на паузе</p><h2 id="workout-guide-title">${esc(spec.name)}</h2></div>
-      <button class="iconbtn" data-action="close-help" aria-label="Закрыть видеопоказ">✕</button></header>
-      ${guideContent(spec)}<footer class="guide-dialog__foot"><button class="btn btn--primary" data-action="close-help">${this.resumeAfterHelp ? 'Понятно, продолжить' : 'Вернуться к паузе'}</button></footer>`;
+      <button class="iconbtn" data-dwell="help-close-top" data-action="close-help" aria-label="Закрыть видеопоказ">✕</button></header>
+      ${guideContent(spec)}<footer class="guide-dialog__foot"><button class="btn btn--primary" data-dwell="help-close" data-action="close-help">${this.resumeAfterHelp ? 'Понятно, продолжить' : 'Вернуться к паузе'}</button></footer>`;
     dialog.showModal();
     playGuideVideos(dialog);
   }
@@ -208,7 +226,7 @@ export class WorkoutScreen extends Screen {
     const dialog = this.q<HTMLDialogElement>('[data-el="help"]');
     if (dialog) { stopGuideVideos(dialog); dialog.close(); dialog.innerHTML = ''; }
     this.helpOpen = false;
-    if (this.resumeAfterHelp) this.session.resume(performance.now());
+    if (this.resumeAfterHelp) this.session.resume(this.now);
     this.q<HTMLButtonElement>('[data-action="help"]')?.focus();
   }
 
@@ -244,7 +262,7 @@ export class WorkoutScreen extends Screen {
     );
     this.setText(
       '[data-el="of"]',
-      spec.mode === 'hold' ? `из ${out.target} с` : `из ${out.target}`,
+      this.session.plan.durationSec ? 'зачтено за попытку' : spec.mode === 'hold' ? `из ${out.target} с` : `из ${out.target}`,
     );
 
     const dots = this.q('[data-el="dots"]');
@@ -262,6 +280,7 @@ export class WorkoutScreen extends Screen {
   private renderCounter(out: FrameOutcome): void {
     const spec = out.spec;
     if (!spec) return;
+    this.setText('[data-el="challenge-clock"]', out.remainingSec !== undefined ? `✦ Осталось ${out.remainingSec} с` : '');
 
     const done = spec.mode === 'hold' ? Math.floor(out.done) : out.done;
     this.setText('[data-el="done"]', String(done));
@@ -294,20 +313,37 @@ export class WorkoutScreen extends Screen {
     }
   }
 
-  private renderHint(out: FrameOutcome): void {
+  private renderHint(out: FrameOutcome, t: number): void {
     const hint = this.q('[data-el="hint"]');
     if (!hint) return;
 
+    if (out.repEvent) {
+      const correction = out.repEvent.corrections[0];
+      const feedback = out.repEvent.feedback;
+      this.feedbackText = correction?.message ?? (feedback ? `${feedback.blocksRep ? 'Не зачтено' : 'Замечание · повтор зачтён'}: ${feedback.hint}` : 'Повтор засчитан');
+      this.feedbackTone = correction || !feedback ? 'success' : feedback.blocksRep ? 'error' : 'warning';
+      this.feedbackUntil = t + 4200;
+    }
+    // Проблема видимости важнее ранее показанного результата повторения.
     const message = out.message;
-    const key = message ? `${message.ruleId}:${message.hint}` : '';
-    if (key === this.lastHintKey) return;
-    this.lastHintKey = key;
-
+    if (!out.framing.some(f => f.severity === 'block') && this.feedbackUntil > t && out.state === 'running') {
+      this.lastHintKey = '';
+      hint.classList.remove('hint--hidden');
+      hint.dataset['severity'] = this.feedbackTone;
+      this.setText('[data-el="hintBadge"]', this.feedbackTone === 'success' ? '✓' : this.feedbackTone === 'error' ? '✕' : '!');
+      this.setText('[data-el="hintText"]', this.feedbackText);
+      this.setText('[data-el="hintNumbers"]', '');
+      return;
+    }
     if (!message) {
+      this.lastHintKey = '';
       hint.classList.add('hint--hidden');
       return;
     }
 
+    const key = `${message.ruleId}:${message.hint}`;
+    if (key === this.lastHintKey) return;
+    this.lastHintKey = key;
     hint.classList.remove('hint--hidden');
     hint.dataset['severity'] = message.severity;
     this.setText('[data-el="hintBadge"]', message.severity === 'error' ? '✕' : '!');
@@ -371,7 +407,7 @@ export class WorkoutScreen extends Screen {
           <h3 class="stagepanel__title">Пауза</h3>
           <p class="stagepanel__lead">Подними обе руки над головой, чтобы продолжить.</p>
           <button class="btn btn--primary" data-dwell="w-resume" data-action="resume">Продолжить</button>
-          <button class="btn btn--ghost" data-action="help">▶ Как выполнять</button>
+          <button class="btn btn--ghost" data-dwell="paused-help" data-action="help">▶ Как выполнять</button>
         </div>`;
     }
 
@@ -387,7 +423,7 @@ export class WorkoutScreen extends Screen {
           </p>
           ${guideVideo(spec)}
           <p class="stagepanel__note">Камера: ${esc(exerciseGuide(spec.id).camera.toLowerCase())}.</p>
-          <button class="btn btn--ghost" data-action="help">Поза и настройка камеры</button>
+          <button class="btn btn--ghost" data-dwell="rest-help" data-action="help">Поза и настройка камеры</button>
         </div>`;
     }
 
@@ -508,7 +544,7 @@ export class WorkoutScreen extends Screen {
    */
   private confirmQuit(): void {
     const button = this.q('[data-action="quit"]');
-    const now = performance.now();
+    const now = this.now;
 
     if (now - this.quitAskedAt < QUIT_CONFIRM_MS) {
       this.complete();
@@ -531,8 +567,9 @@ export class WorkoutScreen extends Screen {
     if (this.finishing) return;
     this.finishing = true;
 
-    const result = this.session.finish(performance.now());
-    const { records } = this.app.history.add(result);
+    const result = this.session.finish(this.now);
+    result.source = this.app.source === 'demo' ? 'simulation' : 'camera';
+    const { records } = result.source === 'simulation' ? { records: [] } : this.app.history.add(result);
 
     this.app.sound.finish();
     this.app.coach.say('Тренировка завершена', 'high');

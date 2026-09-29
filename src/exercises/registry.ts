@@ -59,6 +59,8 @@ export interface WorkoutStep {
 }
 
 export interface WorkoutPlan {
+  /** Короткий режим завершается по времени активной работы, пауза не входит. */
+  durationSec?: number;
   id: string;
   name: string;
   description: string;
@@ -76,6 +78,16 @@ export interface WorkoutPlan {
  * помечены в описании.
  */
 export const WORKOUTS: readonly WorkoutPlan[] = [
+  {
+    id: 'motion', name: 'Три движения · MOTION', description: 'Присед, джампы и жим. По 3 повтора, одна камера спереди.',
+    icon: '◉', minutes: 1, restSec: 5,
+    steps: [{ exerciseId: 'squat', target: 3 }, { exerciseId: 'jumping-jack', target: 3 }, { exerciseId: 'overhead-press', target: 3 }],
+  },
+  {
+    id: 'repair', name: 'Зеркало: исправь движение', description: '75 секунд приседаний в удобном темпе. Заметь подсказку, проверь исправление, сравни попытки.',
+    icon: '✦', minutes: 1, restSec: 0, durationSec: 75,
+    steps: [{ exerciseId: 'squat', target: 999 }],
+  },
   {
     id: 'quick',
     name: 'Быстрая разминка',
@@ -147,6 +159,10 @@ export const WORKOUTS: readonly WorkoutPlan[] = [
 ];
 
 export function workoutById(id: string): WorkoutPlan | undefined {
+  if (id.startsWith('single-')) {
+    const spec = exerciseById(id.slice(7));
+    if (spec) return singleExerciseWorkout(spec);
+  }
   return WORKOUTS.find((w) => w.id === id);
 }
 

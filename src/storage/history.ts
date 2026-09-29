@@ -23,6 +23,8 @@ export interface StoredExercise {
 }
 
 export interface StoredSession {
+  fixedErrors?: number;
+  challenge?: boolean;
   id: string;
   workoutId: string;
   workoutName: string;
@@ -71,6 +73,8 @@ export class History {
   /** Сохраняет тренировку и возвращает установленные рекорды. */
   add(result: SessionResult): { session: StoredSession; records: NewRecord[] } {
     const session: StoredSession = {
+      fixedErrors: result.fixedErrors,
+      challenge: result.challenge,
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       workoutId: result.workoutId,
       workoutName: result.workoutName,

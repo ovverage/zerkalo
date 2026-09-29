@@ -53,7 +53,7 @@ export const jumpingJack: ExerciseSpec = {
   defaultTarget: 20,
   mets: 8,
   thresholds: { reset: 0.18, attempt: 0.45, valid: 0.82 },
-  tracked: ['armElev', 'stance', 'desync', 'armPart', 'legPart'],
+  tracked: ['armElev', 'stance', 'desync', 'armPart', 'legPart', 'together'],
   hud: { metric: 'armElev', label: 'Руки', unit: '°', decimals: 0 },
 
   metrics(b) {
@@ -66,6 +66,7 @@ export const jumpingJack: ExerciseSpec = {
       stance,
       armPart,
       legPart,
+      together: Math.min(armPart, legPart),
       desync: Math.abs(armPart - legPart),
     };
   },
@@ -91,7 +92,7 @@ export const jumpingJack: ExerciseSpec = {
       highlight: ['arms', 'feet'],
       check(ctx) {
         const d = ctx.m['desync'] ?? 0;
-        if (d <= 0.34) return null;
+        if (d <= 0.34 || ctx.progress < 0.65 || Math.abs(ctx.velocity) > 0.4) return null;
         const arms = ctx.m['armPart'] ?? 0;
         const legs = ctx.m['legPart'] ?? 0;
         return {
@@ -104,26 +105,15 @@ export const jumpingJack: ExerciseSpec = {
       },
     },
 
-    {
-      id: 'jack-stiff-arms',
-      title: 'Руки не доходят вверх',
-      severity: 'warning',
-      priority: 50,
-      phases: ['bottom'],
-      highlight: ['arms'],
-      check(ctx) {
-        const e = ctx.m['armElev'] ?? 0;
-        if (e >= 120) return null;
-        return {
-          hint: `Руки идут только до ${deg(e)} — поднимай их над головой, а не в стороны.`,
-          value: e,
-          target: ARM_TARGET,
-        };
-      },
-    },
+
   ],
 
   repRules: [
+    romRule({
+      id: 'jack-together', title: 'Движения не совпали', metric: 'together',
+      need: 'above', limit: 0.8, priority: 85, highlight: ['arms', 'feet'],
+      hint: () => 'Поднимай руки и разводи стопы одновременно. Отдельный мах руками и отдельный шаг не составляют повторение.',
+    }),
     romRule({
       id: 'jack-arms',
       title: 'Руки не над головой',

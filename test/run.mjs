@@ -9,7 +9,7 @@ const dir = '.test-build';
 mkdirSync(dir, { recursive: true });
 
 await build({
-  entryPoints: ['test/engine.test.ts', 'test/session.test.ts', 'test/gestures.test.ts', 'test/tracking.test.ts', 'test/vision.test.ts', 'test/coach.test.ts', 'test/guides.test.ts'],
+  entryPoints: readdirSync('test').filter(name => name.endsWith('.test.ts')).map(name => `test/${name}`),
   bundle: true,
   define: { 'import.meta.env.BASE_URL': '"/"' },
   platform: 'node',

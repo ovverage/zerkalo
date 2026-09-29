@@ -1,17 +1,11 @@
-/**
- * Жим над головой (без веса) — вид спереди.
- *
- * Главная ошибка здесь не амплитуда, а компенсация: когда рук не хватает,
- * человек прогибается в пояснице и «дожимает» корпусом. Это заметно только по
- * наклону корпуса относительно линии ног, поэтому правило прогиба стоит выше
- * по приоритету, чем правило амплитуды.
- */
+/** Жим без веса: полный цикл локтей, высота кистей и видимый боковой наклон.
+ * По фронтальной камере не выдаём оценку изгиба поясницы. */
 
 import type { ExerciseSpec } from '../engine/types';
 import {
   armElevation,
   armInPlane,
-  backArchRule,
+  lateralTilt,
   deg,
   elbowAngle,
   handAboveHead,
@@ -20,7 +14,6 @@ import {
   stallRule,
   symmetryRule,
   tempoRule,
-  torsoPitch,
   visibilityRule,
 } from './common';
 import { mapRange } from '../vision/geometry';
@@ -34,6 +27,9 @@ const REQUIRED = [
   'right_wrist',
   'left_hip',
   'right_hip',
+  'nose',
+  'left_ankle',
+  'right_ankle',
 ] as const;
 
 export const overheadPress: ExerciseSpec = {
@@ -55,7 +51,7 @@ export const overheadPress: ExerciseSpec = {
   defaultTarget: 14,
   mets: 4,
   thresholds: { reset: 0.2, attempt: 0.5, valid: 0.86 },
-  tracked: ['elbowMean', 'elev', 'elevL', 'elevR', 'wristHead', 'torsoPitch', 'planeMin'],
+  tracked: ['elbowMean', 'elbowMin', 'elev', 'elevL', 'elevR', 'wristHead', 'lateralTilt', 'planeMin'],
   hud: { metric: 'elbowMean', label: 'Локоть', unit: '°', decimals: 0 },
 
   metrics(b) {
@@ -70,8 +66,9 @@ export const overheadPress: ExerciseSpec = {
       elbowL,
       elbowR,
       elbowMean: (elbowL + elbowR) / 2,
+      elbowMin: Math.min(elbowL, elbowR),
       wristHead: Math.min(handAboveHead(b, 'left'), handAboveHead(b, 'right')),
-      torsoPitch: torsoPitch(b),
+      lateralTilt: lateralTilt(b),
       planeMin: Math.min(armInPlane(b, 'left'), armInPlane(b, 'right')),
     };
   },
@@ -89,12 +86,14 @@ export const overheadPress: ExerciseSpec = {
 
     stallRule('Выжимай руки выше — движение слишком короткое, чтобы засчитать повторение.'),
 
-    backArchRule({
-      max: 15,
-      priority: 80,
-      hint: (a) =>
-        `Прогиб в пояснице ${deg(a)} — ты дожимаешь корпусом, а не руками. Напряги живот и держи корпус вертикально.`,
-    }),
+    {
+      id: 'press-tilt', title: 'Корпус наклоняется в сторону', severity: 'warning', priority: 80,
+      phases: ['descent', 'bottom', 'ascent'], highlight: ['torso'],
+      check(ctx) {
+        const tilt = Math.abs(ctx.m['lateralTilt'] ?? 0);
+        return tilt > 15 ? { hint: 'Выровняй плечи над тазом. Поднимай руки без наклона корпуса в сторону.', value: tilt, target: 15, unit: '°' } : null;
+      },
+    },
 
     {
       id: 'press-forward',
@@ -129,7 +128,7 @@ export const overheadPress: ExerciseSpec = {
     romRule({
       id: 'press-lockout',
       title: 'Не дожал до конца',
-      metric: 'elbowMean',
+      metric: 'elbowMin',
       need: 'above',
       limit: 158,
       highlight: ['elbows'],
@@ -150,19 +149,18 @@ export const overheadPress: ExerciseSpec = {
           : 'Подними кисти чуть выше — они должны уйти явно над головой.',
     }),
 
-    romRule({
+    {
       id: 'press-bottom',
       title: 'Не опустил руки',
-      metric: 'elbowMean',
-      need: 'below',
-      limit: 112,
-      severity: 'warning',
-      blocksRep: false,
+      severity: 'error',
+      blocksRep: true,
       priority: 52,
       highlight: ['elbows'],
-      hint: (actual, limit) =>
-        `Опускай руки ниже: сгиб локтя ${deg(actual)}, нужно до ${deg(limit)} — локти на уровне плеч.`,
-    }),
+      check(rep) {
+        const actual = Math.max(rep.endMetrics['elbowL'] ?? 180, rep.endMetrics['elbowR'] ?? 180);
+        return actual <= 118 ? null : { hint: `Верни согнутые локти к плечам: сейчас ${deg(actual)}, нужно до 118°. Подъём прямых рук — другое движение.`, value: actual, target: 118, unit: '°' };
+      },
+    },
 
     tempoRule({ minDescentMs: 380, minRepMs: 900 }),
   ],

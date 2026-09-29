@@ -32,6 +32,7 @@ export interface LoadProgress {
 export type ProgressHandler = (progress: LoadProgress) => void;
 
 export class PoseEngine {
+  completedResults = 0;
   private landmarker: PoseLandmarker | null = null;
   private quality: ModelQuality | null = null;
   private readonly smoother = new PoseSmoother();
@@ -146,6 +147,7 @@ export class PoseEngine {
         }
       }
     }
+    this.completedResults += 1;
     if (!usable(result)) {
       this.cached = null;
       if (nowMs - (this.lostAt ?? nowMs) > 450) {
@@ -252,7 +254,7 @@ function wasmFileName(): string {
 /** Размер файла по HEAD-запросу — нужен, чтобы знать знаменатель прогресса. */
 async function sizeOf(url: string): Promise<number> {
   try {
-    const res = await fetch(url, { method: 'HEAD' });
+    const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(8000) });
     return Number(res.headers.get('content-length') ?? 0);
   } catch {
     return 0;
@@ -261,7 +263,7 @@ async function sizeOf(url: string): Promise<number> {
 
 /** Скачивает файл, сообщая о каждом полученном куске. */
 async function download(url: string, onChunk: (bytes: number) => void): Promise<Uint8Array | null> {
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(30000) });
   if (!res.ok) throw new Error(`не удалось загрузить ${url}: ${res.status}`);
 
   if (!res.body) {

@@ -72,6 +72,9 @@ export function checkFraming(
       severity: 'block',
     });
   }
+  if (observation.ok && tracking === 'either-side' && !observe(body, required, 'all').ok) {
+    issues.push({ code: 'one-side', severity: 'warn', hint: 'Видна одна сторона: считаю амплитуду. Сравнить симметрию сейчас нельзя.' });
+  }
   const box = boundingBox(body);
   if (observation.ok && Math.max(box.width, box.height) < 0.22) {
     issues.push({ code: 'too-far', hint: 'Можно подойти чуть ближе — так суставы будут видны точнее.', severity: 'warn' });
@@ -81,8 +84,8 @@ export function checkFraming(
   if (tracking !== 'either-side' && view === 'front' && facing < 0.35) {
     issues.push({
       code: 'turn-front',
-      hint: 'Спереди будет лучше видно обе стороны тела.',
-      severity: 'warn',
+      hint: 'Повернись лицом к камере: в профиль нельзя надёжно сравнить обе руки и ширину шага. Счёт приостановлен.',
+      severity: 'block',
     });
   }
   if (view === 'side' && facing > 0.75) {

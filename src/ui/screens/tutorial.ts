@@ -10,7 +10,6 @@
 import { Screen } from '../../core/screen';
 import type { DrawHints, ScreenFrame } from '../../core/screen';
 import type { GestureName } from '../../gestures/uiGestures';
-import { isArmsCrossed, isHandsUp } from '../../gestures/uiGestures';
 import { loadPrefs, savePrefs } from '../../storage/prefs';
 
 interface Lesson {
@@ -94,11 +93,7 @@ export class TutorialScreen extends Screen {
   }
 
   override update(frame: ScreenFrame): DrawHints {
-    const { body } = frame;
-    if (body) {
-      if (isHandsUp(body)) this.complete('confirm');
-      if (isArmsCrossed(body)) this.complete('cancel');
-    }
+    void frame; // Засчитываем именно выдержанный жест, а не единственный кадр.
 
     const all = LESSONS.every((l) => this.done.has(l.id));
     this.toggle('.btn--primary', 'btn--pulse', all);

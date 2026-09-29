@@ -22,6 +22,8 @@ import type { ModelQuality } from '../../storage/prefs';
 import { exerciseGuide, exerciseMedia } from '../../exercises/guides';
 
 export class MenuScreen extends Screen {
+  private get workouts() { return this.app.source === 'demo' ? WORKOUTS.filter(w => w.id === 'motion' || w.id === 'repair') : WORKOUTS; }
+  private get exercises() { return this.app.source === 'demo' ? EXERCISES.slice(0, 3) : EXERCISES; }
   protected override template(): string {
     const totals = this.app.history.totals();
     const prefs = loadPrefs();
@@ -30,7 +32,7 @@ export class MenuScreen extends Screen {
       <div class="screen screen--scroll menu">
         <header class="menu__head">
           <div>
-            <p class="guide-eyebrow">${this.app.hasVision ? '● Камера подключена' : 'Библиотека движений'}</p>
+            <p class="guide-eyebrow">${this.app.source === 'demo' ? 'Знакомство с интерфейсом' : this.app.hasVision ? '● Камера подключена' : 'Библиотека движений'}</p>
             <h2 class="menu__title">Выбери тренировку</h2>
             <p class="menu__lead">Сначала — видеопоказ и настройка камеры. Затем — тренировка в твоём темпе.</p>
           </div>
@@ -46,7 +48,7 @@ export class MenuScreen extends Screen {
 
         <h3 class="menu__sub">Готовые программы <span>Несколько упражнений подряд</span></h3>
         <div class="cards">
-          ${WORKOUTS.map((w, i) => {
+          ${this.workouts.map((w, i) => {
             const names = w.steps
               .map((s) => requireExercise(s.exerciseId).short)
               .filter((n, idx, arr) => arr.indexOf(n) === idx)
@@ -65,9 +67,9 @@ export class MenuScreen extends Screen {
           }).join('')}
         </div>
 
-        <h3 class="menu__sub">Отдельное упражнение <span>11 движений с видеопоказом</span></h3>
+        <h3 class="menu__sub">Отдельное упражнение <span>${this.exercises.length} движений с видеопоказом</span></h3>
         <div class="chips">
-          ${EXERCISES.map(
+          ${this.exercises.map(
             (e) => `
             <button class="chip" data-dwell="ex-${e.id}" data-action="ex-${e.id}">
               <span class="chip__visual"><img src="${exerciseMedia(e.id, 'svg')}" alt="" loading="lazy"><span class="chip__play">▶ Видеопоказ</span></span>
@@ -159,8 +161,8 @@ export class MenuScreen extends Screen {
       if (label) label.textContent = MODEL_LABEL[next];
       button.classList.toggle('toggle--on', next !== 'lite');
     } catch {
-      if (label) label.textContent = MODEL_LABEL[previous];
-      this.app.coach.say('Не удалось загрузить модель. Продолжаем с предыдущей.', 'high');
+      if (label) label.textContent = this.app.hasVision ? `${MODEL_LABEL[previous]} · переключение не удалось` : 'Не удалось загрузить · запусти камеру заново';
+      this.app.coach.say('Не удалось загрузить модель.', 'high');
     } finally {
       button.disabled = false;
     }

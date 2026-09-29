@@ -9,12 +9,11 @@
  *      подсказке, которую экран показал в этом же кадре.
  */
 
-import { startCamera, startDemoVideo, stopCamera } from './vision/camera';
+import { startCamera, stopCamera } from './vision/camera';
 import { PoseDetector } from './vision/poseDetector';
 import type { ProgressHandler } from './vision/poseDetector';
 import { BrightnessProbe, boundingBox } from './vision/framing';
 import { GestureEngine } from './gestures/uiGestures';
-import type { DwellTarget } from './gestures/uiGestures';
 import { SkeletonOverlay } from './ui/overlay';
 import { EffectLayer } from './ui/fx';
 import { VoiceCoach } from './ui/coach';
@@ -32,6 +31,8 @@ import { PreviewScreen } from './ui/screens/preview';
 import { WorkoutScreen } from './ui/screens/workout';
 import { ResultsScreen } from './ui/screens/results';
 import { HistoryScreen } from './ui/screens/history';
+import { HandsFreeControls, collectDwellTargets } from './ui/handsFree';
+import { DemoSimulation } from './demo/simulation';
 
 export interface AppElements {
   stage: HTMLElement;
@@ -55,6 +56,11 @@ export class App implements AppApi {
   private readonly wakeLock = new ScreenWakeLock();
   private readonly probe = new BrightnessProbe();
   private readonly els: AppElements;
+  private readonly handsFree: HandsFreeControls;
+  private readonly simulation = new DemoSimulation();
+  private slowSince: number | null = null;
+  private visionStartedAt = 0;
+  private switchingModel = false;
 
   private screen: Screen | null = null;
   private stream: MediaStream | null = null;
@@ -69,6 +75,13 @@ export class App implements AppApi {
 
   constructor(els: AppElements) {
     this.els = els;
+    this.handsFree = new HandsFreeControls(els.ui, () => {
+      if (this.switchingModel) return;
+      this.switchingModel = true;
+      void this.setModelQuality('lite').catch(error => {
+        this.handsFree.accepted(error instanceof Error ? error.message : 'Не удалось переключить модель', performance.now());
+      }).finally(() => { this.switchingModel = false; });
+    });
     this.video = els.video;
     this.overlay = new SkeletonOverlay(els.skeleton);
     this.fx = new EffectLayer(els.effects);
@@ -132,18 +145,23 @@ export class App implements AppApi {
     // мы попадаем именно из него.
     this.sound.unlock();
 
-    await this.detector.load(loadPrefs().model, onProgress);
-
     if (kind === 'camera') {
       const started = await startCamera(this.video);
       this.stream = started.stream;
+      try { await this.detector.load(loadPrefs().model, onProgress); }
+      catch (error) { stopCamera(this.stream); this.stream = null; throw error; }
     } else {
-      await startDemoVideo(this.video, `${import.meta.env.BASE_URL}demo/demo.mp4`);
+      stopCamera(this.stream);
+      this.stream = null;
+      this.video.pause();
+      this.video.srcObject = null;
     }
 
     this.sourceKind = kind;
     this.visionReady = true;
+    this.visionStartedAt = performance.now();
     this.els.stage.classList.add('stage--live');
+    this.els.stage.classList.toggle('stage--demo', kind === 'demo');
   }
 
   /**
@@ -152,8 +170,10 @@ export class App implements AppApi {
    * просто не видит позу.
    */
   async setModelQuality(quality: ModelQuality, onProgress?: ProgressHandler): Promise<void> {
-    if (!this.visionReady) {
+    if (!this.visionReady || this.sourceKind === 'demo') {
       savePrefs({ ...loadPrefs(), model: quality });
+      this.slowSince = null;
+      this.visionStartedAt = performance.now();
       return;
     }
 
@@ -162,7 +182,7 @@ export class App implements AppApi {
       await this.detector.load(quality, onProgress);
       savePrefs({ ...loadPrefs(), model: quality });
     } finally {
-      this.visionReady = true;
+      this.visionReady = this.detector.isReady;
     }
   }
 
@@ -183,6 +203,18 @@ export class App implements AppApi {
     host.className = 'screenhost';
     this.els.ui.appendChild(host);
     this.screen.mount(host);
+    if (this.sourceKind === 'demo' && route.name !== 'welcome') {
+      const banner = document.createElement('aside');
+      banner.className = 'source-banner';
+      banner.innerHTML = '<b>СИМУЛЯЦИЯ</b> · искусственные координаты, без камеры и MediaPipe. Управляй кнопками. <button>К камере</button>';
+      banner.querySelector('button')!.addEventListener('click', () => {
+        this.visionReady = false;
+        this.sourceKind = null;
+        this.els.stage.classList.remove('stage--demo', 'stage--live');
+        this.go({ name: 'welcome' });
+      });
+      host.querySelector('.screen')?.prepend(banner);
+    }
   }
 
   stop(): void {
@@ -221,13 +253,26 @@ export class App implements AppApi {
     this.overlay.resize();
     this.fx.resize();
 
-    const ready = this.visionReady && this.video.readyState >= 2;
-    const body = ready ? this.detector.detect(this.video, now) : null;
-    const brightness = ready ? this.probe.sample(this.video, now) : null;
+    const demo = this.sourceKind === 'demo';
+    const ready = this.visionReady && (demo || this.video.readyState >= 2);
+    const body = demo ? this.simulation.frame(now, this.screen?.demoMotion ?? null)
+      : ready ? this.detector.detect(this.video, now) : null;
+    const brightness = ready && !demo ? this.probe.sample(this.video, now) : null;
+    if (this.detector.failure && !demo && this.visionReady) {
+      this.visionReady = false;
+      stopCamera(this.stream);
+      this.go({ name: 'welcome', error: this.detector.failure });
+    }
+    const inferenceFps = this.detector.meter.fps(now);
+    const slow = !demo && ready && now - this.visionStartedAt > 5000 && inferenceFps < 10;
+    this.slowSince = slow ? this.slowSince ?? now : null;
+    this.handsFree.performance(inferenceFps, this.fps,
+      this.slowSince !== null && now - this.slowSince > 5000 && loadPrefs().model !== 'lite',
+      this.screen?.dwellEnabled ?? false, this.switchingModel);
 
-    const gesture = this.gestures.update(body, now, {
+    const gesture = this.gestures.update(demo ? null : body, now, {
       container: this.els.stage.getBoundingClientRect(),
-      targets: this.collectTargets(),
+      targets: collectDwellTargets(this.els.ui),
       mirrored: this.mirroredValue,
       dwellEnabled: this.screen?.dwellEnabled ?? true,
     });
@@ -237,11 +282,16 @@ export class App implements AppApi {
       const node = this.els.ui.querySelector<HTMLElement>(
         `[data-dwell="${cssEscape(gesture.activatedTargetId)}"]`,
       );
+      this.handsFree.accepted(node?.textContent?.trim().slice(0, 65) || 'Выбрано', now);
       node?.click();
     }
-    if (gesture.fired) this.screen?.onGesture(gesture.fired);
+    if (gesture.fired) {
+      this.handsFree.accepted(gesture.fired === 'confirm' ? 'Подтверждение' : 'Пауза / назад', now);
+      this.screen?.onGesture(gesture.fired);
+    }
 
     const hints = this.screen?.update({ body, t: now, dt, gesture, brightness, fps: this.fps }) ?? {};
+    this.handsFree.update(gesture, this.screen, this.hasVision && !demo, now);
 
     // Слои рисуем в одном месте и в фиксированном порядке: подсказка
     // кадрирования снизу, скелет поверх неё, курсор жестов сверху.
@@ -261,10 +311,6 @@ export class App implements AppApi {
       });
     }
 
-    if (gesture.cursor && (this.screen?.dwellEnabled ?? true)) {
-      this.overlay.drawCursor(gesture.cursor, gesture.dwell, gesture.dwellTargetId !== null);
-    }
-
     this.fx.update(dt);
     this.fx.draw();
 
@@ -273,16 +319,7 @@ export class App implements AppApi {
     }
   };
 
-  private collectTargets(): DwellTarget[] {
-    const nodes = this.els.ui.querySelectorAll<HTMLElement>('[data-dwell]');
-    const targets: DwellTarget[] = [];
-    for (const node of nodes) {
-      const id = node.dataset['dwell'];
-      if (!id || node.hasAttribute('disabled')) continue;
-      targets.push({ id, rect: node.getBoundingClientRect() });
-    }
-    return targets;
-  }
+
 }
 
 const EMPTY_SET = new Set<never>();

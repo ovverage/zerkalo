@@ -30,6 +30,7 @@ export class ResultsScreen extends Screen {
 
     return `
       <div class="screen screen--scroll results">
+        ${r.source === 'simulation' ? '<p class="alert">Демонстрационные результаты не записываются в личную историю и не подтверждают точность модели.</p>' : ''}
         <header class="results__head">
           <div class="score" data-tone="${tone}">
             ${scoreRing(r.score)}
@@ -49,8 +50,11 @@ export class ResultsScreen extends Screen {
           ${r.totalHoldSec > 0 ? stat(`${r.totalHoldSec} с`, 'удержание') : ''}
           ${stat(duration(r.durationMs), 'время')}
           ${stat(`${r.avgQuality}%`, 'качество техники')}
+          ${r.challenge ? stat(String(r.fixedErrors), 'исправленных правил амплитуды') : ''}
           ${stat(`${r.kcal}`, 'ккал (оценка)')}
         </div>
+        <p class="quality-explanation">Качество — средняя оценка завершённых попыток: 100 минус 20 за ошибку и 9 за замечание, минимум 0. Это совпадение с правилами приложения, а не медицинская оценка. Итоговый балл: 60% качества + 40% выполнения плана${r.challenge ? ' по времени' : ''}.</p>
+        ${this.comparisonHtml()}
 
         <h3 class="results__sub">По упражнениям</h3>
         <div class="exlist">
@@ -97,16 +101,26 @@ export class ResultsScreen extends Screen {
 
   private again(): void {
     const plan = workoutById(this.result.workoutId);
-    if (plan) this.app.go({ name: 'workout', plan });
+    if (plan) this.app.go({ name: 'preview', plan });
     else this.app.go({ name: 'menu' });
   }
 
   private verdict(): string {
     const r = this.result;
-    if (r.avgQuality >= 90) return 'Техника почти безупречная — можно увеличивать объём.';
+    if (!r.exercises.some(e => e.attempts > 0 || e.done > 0)) return 'Пока нет завершённых движений для оценки. Проверь видимость суставов и попробуй снова.';
+    if (r.avgQuality >= 90) return 'Движения соответствуют проверяемым правилам. Хороший результат.';
     if (r.avgQuality >= 75) return 'Хорошая работа. Ниже — что стоит поправить в следующий раз.';
     if (r.avgQuality >= 55) return 'Объём есть, техника просаживается. Разбор ошибок ниже.';
     return 'Сделай меньше повторений, но чище — техника важнее количества.';
+  }
+
+  private comparisonHtml(): string {
+    if (!this.result.challenge || this.result.source === 'simulation') return '';
+    const attempts = this.app.history.list().filter(s => s.workoutId === this.result.workoutId);
+    const previous = attempts[1];
+    if (!previous) return '<p class="alert alert--good">Первая попытка сохранена. После следующей здесь появится сравнение.</p>';
+    const diff = this.result.avgQuality - previous.avgQuality;
+    return `<p class="alert alert--good">Предыдущая попытка: ${previous.totalReps} повт. · ${previous.avgQuality}% · исправлено ${previous.fixedErrors ?? 0}. Сейчас: ${this.result.totalReps} повт. · ${this.result.avgQuality}% (${diff >= 0 ? '+' : ''}${diff} п.п.) · исправлено ${this.result.fixedErrors}.</p>`;
   }
 
   private recordsHtml(): string {
@@ -134,7 +148,7 @@ export class ResultsScreen extends Screen {
         <div class="exrow__body">
           <div class="exrow__top">
             <b class="exrow__name">${esc(e.name)}</b>
-            <span class="exrow__count">${e.done}${unit} / ${e.target}${unit}</span>
+            <span class="exrow__count">${e.done}${unit}${this.result.challenge ? ' повт.' : ` / ${e.target}${unit}`}</span>
           </div>
           <div class="exrow__bar">
             <i style="width:${Math.round(Math.min(e.done / Math.max(e.target, 1), 1) * 100)}%"></i>
@@ -154,7 +168,7 @@ export class ResultsScreen extends Screen {
     if (top.length === 0) {
       return `
         <div class="alert alert--good">
-          Ни одной ошибки техники за тренировку. Такое бывает редко — можно усложнять.
+          ${this.result.totalReps + this.result.totalHoldSec > 0 ? 'В завершённых движениях проверяемых ошибок не обнаружено. Исправления не выдумываем.' : 'Недостаточно завершённых движений для вывода о технике.'}
         </div>`;
     }
 
