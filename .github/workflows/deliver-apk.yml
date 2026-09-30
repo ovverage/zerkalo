@@ -1,0 +1,33 @@
+# Recovery for slow uplinks: reconstruct exactly the already signed APK.
+# No keystore or signing key is uploaded. Never compiles or re-signs Android.
+name: Deliver prepared Android package
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deliver:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Download base and small prepared delta
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p release
+          gh release download v1.2.0 --pattern zerkalo-1.2.0.apk --dir release --repo "$GITHUB_REPOSITORY"
+          gh release download v1.3.0 --pattern zerkalo-1.3.0.apk.delta.zip --dir release --repo "$GITHUB_REPOSITORY"
+      - name: Restore signed bytes and verify pinned hash
+        run: python3 scripts/restore-apk.py release/zerkalo-1.2.0.apk release/zerkalo-1.3.0.apk.delta.zip release/zerkalo-1.3.0.apk
+      - name: Attach verified APK and checksum
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload v1.3.0 release/zerkalo-1.3.0.apk release/zerkalo-1.3.0.apk.sha256 --repo "$GITHUB_REPOSITORY"
+          gh release delete-asset v1.3.0 zerkalo-1.3.0.apk.delta.zip --yes --repo "$GITHUB_REPOSITORY"
