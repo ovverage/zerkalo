@@ -231,7 +231,7 @@ code {
   margin-top: 26px;
 }
 
-.btn {
+. {
   display: inline-block;
   padding: 14px 26px;
   border-radius: 999px;
@@ -243,12 +243,14 @@ code {
   transition: transform 0.14s ease, background 0.14s ease;
 }
 
-.btn:hover {
+.:hover {
   background: rgba(255, 255, 255, 0.13);
   transform: translateY(-1px);
 }
 
 .btn--primary {
+  display: flex;
+  align-items: center;
   background: linear-gradient(135deg, var(--accent) 0%, #4ec9ec 100%);
   border-color: transparent;
   color: #05202b;
@@ -262,19 +264,19 @@ code {
 
 /* Заглушка вместо кнопки, когда APK не собран: выглядит как информация,
    а не как то, что можно нажать. */
-.btn--muted {
+.--muted {
   cursor: default;
   color: var(--text-dim);
   border-style: dashed;
   background: none;
 }
 
-.btn--muted:hover {
+.--muted:hover {
   transform: none;
   background: none;
 }
 
-.btn__sub {
+.__sub {
   display: block;
   font-size: 11px;
   font-weight: 500;
