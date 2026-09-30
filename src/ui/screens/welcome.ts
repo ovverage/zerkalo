@@ -29,58 +29,60 @@ export class WelcomeScreen extends Screen {
 
     return `
       <div class="screen screen--center welcome">
-        <div class="hero">
-          ${poseAnimation()}
-          <div class="hero__chip">
-            <span class="hero__chip-label">повторений</span>
-            <span class="hero__digits"><i>0</i><i>1</i><i>2</i><i>3</i></span>
-          </div>
-        </div>
-
-        <div class="panel panel--wide welcome__panel">
-          <div class="brand">
-            <h1 class="brand__name">Зеркало</h1>
-            <p class="brand__tag">Тренировки с проверкой техники</p>
-          </div>
-
-          <ul class="bullets">
-            <li><b>Считает повторения</b> и не засчитывает неполные</li>
-            <li><b>Подсказывает по технике</b> во время упражнения</li>
-            <li><b>Скрести руки</b> для старта или паузы</li>
-          </ul>
-
-          ${this.error ? `<div class="alert alert--error">${esc(this.error)}</div>` : ''}
-
-          <div class="loader" data-el="loader" hidden>
-            <div class="loader__row">
-              <span class="loader__phase" data-el="phase">Готовлюсь…</span>
-              <span class="loader__pct" data-el="pct"></span>
+        <div class="welcome__content">
+          <div class="hero">
+            ${poseAnimation()}
+            <div class="hero__chip">
+              <span class="hero__chip-label">повторений</span>
+              <span class="hero__digits"><i>0</i><i>1</i><i>2</i><i>3</i></span>
             </div>
-            <div class="loader__track"><i data-el="fill"></i></div>
-            <p class="loader__note">Первый запуск может занять до 45 секунд. Файлы сохраняются в кэше браузера.</p>
           </div>
 
-          <div class="row row--buttons" data-el="buttons">
-            <button class="btn btn--primary" data-action="camera">Включить камеру</button>
-            <button class="btn btn--ghost" data-action="demo">Демо · симуляция без камеры</button>
-          </div>
+          <div class="panel panel--wide welcome__panel">
+            <div class="brand">
+              <h1 class="brand__name">Зеркало</h1>
+              <p class="brand__tag">Тренировки с проверкой техники</p>
+            </div>
 
-          <p class="note">
-            Видео остаётся на устройстве.
+            <ul class="bullets">
+              <li><b>Считает повторения</b> и не засчитывает неполные</li>
+              <li><b>Подсказывает по технике</b> во время упражнения</li>
+              <li><b>Скрести руки</b> для старта или паузы</li>
+            </ul>
+
+            ${this.error ? `<div class="alert alert--error">${esc(this.error)}</div>` : ''}
+
+            <div class="loader" data-el="loader" hidden>
+              <div class="loader__row">
+                <span class="loader__phase" data-el="phase">Готовлюсь…</span>
+                <span class="loader__pct" data-el="pct"></span>
+              </div>
+              <div class="loader__track"><i data-el="fill"></i></div>
+              <p class="loader__note">Первый запуск может занять до 45 секунд. Файлы сохраняются в кэше браузера.</p>
+            </div>
+
+            <div class="row row--buttons" data-el="buttons">
+              <button class="btn btn--primary" data-action="camera">Включить камеру</button>
+              <button class="btn btn--ghost" data-action="demo">Демо · симуляция без камеры</button>
+            </div>
+
+            <p class="note">
+              Видео остаётся на устройстве.
+              ${
+                totals.sessions > 0
+                  ? `Уже пройдено тренировок: <b>${totals.sessions}</b>.`
+                  : 'Для тренировки нужен доступ к камере.'
+              }
+            </p>
+
+            <button class="btn btn--link" data-action="exercises">Упражнения и видеопоказы →</button>
+
             ${
               totals.sessions > 0
-                ? `Уже пройдено тренировок: <b>${totals.sessions}</b>.`
-                : 'Для тренировки нужен доступ к камере.'
+                ? '<button class="btn btn--link" data-action="history">Посмотреть прогресс</button>'
+                : ''
             }
-          </p>
-
-          <button class="btn btn--link" data-action="exercises">Упражнения и видеопоказы →</button>
-
-          ${
-            totals.sessions > 0
-              ? '<button class="btn btn--link" data-action="history">Посмотреть прогресс</button>'
-              : ''
-          }
+          </div>
         </div>
       </div>
     `;

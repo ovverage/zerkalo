@@ -1,4 +1,4 @@
-/* App shell: one inset owner, one scroll area, navigation outside that area.
+/* Shared shell: scroll regions, camera controls and safe-area geometry.
    Capacitor supplies --safe-area-inset-* even on older Android WebViews. */
 :root {
   --app-safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
@@ -25,24 +25,7 @@ button:focus-visible { outline: 3px solid #8ce8cf; outline-offset: 3px; }
 .screen--scroll > *, .screen--top > * { flex-shrink: 0; }
 .menu, .preview, .settings, .history, .results, .welcome { background: #0b1320; --panel: #152133; --text-dim: #b5c3d5; }
 .stage--browsing #skeleton { z-index: auto; }
-.bottom-nav { flex: none; width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px max(8px, calc((100% - 680px) / 2)) 10px; gap: 2px; background: #12202d; border-top: 1px solid #293b4a; }
-.bottom-nav button { min-width: 0; min-height: 60px; padding: 0 2px; display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; color: #aebdcc; font-size: 11px; font-weight: 500; }
-.bottom-nav__icon { width: 58px; height: 30px; display: grid; place-items: center; border-radius: 20px; transition: background .15s; }
-.bottom-nav svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.bottom-nav [aria-current] { color: #acf3dd; }
-.bottom-nav [aria-current] .bottom-nav__icon { background: #254940; }
 .menu-summary { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; padding: 14px 16px; background: #183832; border: 1px solid #315b4f; border-radius: 18px; font-size: 12px; color: #b7e9d8; }
-.menu__title { font-size: 30px; letter-spacing: -.04em; }
-.menu__sub { font-size: 18px; }
-.menu .card { border-radius: 22px; padding: 20px; gap: 8px; border-color: #2c3d4f; }
-.menu .card--accent { background: linear-gradient(140deg, #214e46, #152e36); border-color: #437865; }
-.menu .card__name { font-size: 19px; }
-.menu .card__desc { font-size: 14px; line-height: 1.55; }
-.menu .card__list { color: #b0c3cd; }
-.menu .chip { border-radius: 20px; }
-.menu .chip__name { font-size: 16px; }
-.menu .chip__camera { font-size: 12px; }
-.menu .chip__play { font-size: 10px; }
 .settings-group { border: 1px solid #2c3e4e; background: #142232; border-radius: 22px; overflow: hidden; }
 .settings-group h3 { padding: 20px 18px 8px; font-size: 17px; }
 .settings-note { color: #b7c7d7; font-size: 14px; line-height: 1.6; padding: 4px 18px 14px; }
@@ -111,18 +94,9 @@ button:focus-visible { outline: 3px solid #8ce8cf; outline-offset: 3px; }
   .screen { padding: 18px 16px; gap: 16px; }
   .screen--top { padding-top: 18px; }
   .screen--center > * { flex-shrink: 0; }
-  .welcome .hero { width: 96px; margin: 12px auto 20px; }
-  .welcome .panel { padding: 22px; }
-  .welcome .brand__name { font-size: 36px; }
-  .welcome .row--buttons { align-items: stretch; flex-direction: column; }
-  .welcome .bullets li { font-size: 14px; }
   .menu__head { padding: 4px 0; }
-  .menu__title { font-size: 28px; }
   .menu .cards { grid-template-columns: 1fr; }
-  .menu .card { padding: 18px; }
   .menu .chips { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .menu .chip__body { padding: 13px 11px; }
-  .menu .chip__name { font-size: 15px; }
   .preview__foot { bottom: -18px; margin-top: 8px; gap: 10px; }
   .preview__foot > p:first-child { display: none; }
   .preview__foot .btn { width: 100%; font-size: 15px; padding: 14px 10px; }
@@ -168,9 +142,6 @@ button:focus-visible { outline: 3px solid #8ce8cf; outline-offset: 3px; }
   .guide-dialog__foot { bottom: -16px; }
 }
 @media(max-height: 500px) and (min-width: 600px) {
-  .bottom-nav { padding-top: 4px; padding-bottom: 4px; }
-  .bottom-nav button { min-height: 48px; flex-direction: row; font-size: 12px; gap: 6px; }
-  .bottom-nav__icon { width: 42px; }
   .workout { display: grid; grid-template-columns: minmax(0, 1fr) 110px; grid-template-rows: auto minmax(0, 1fr); }
   .workout .bar { grid-column: 1; grid-row: 1; }
   .workout__body { grid-column: 1; grid-row: 2; }
@@ -187,8 +158,6 @@ button:focus-visible { outline: 3px solid #8ce8cf; outline-offset: 3px; }
 }
 @media (prefers-reduced-motion: reduce) { .screenhost { animation: none; } }
 
-.btn--primary { background: #a5efd3; color: #0b3528; box-shadow: none; border-color: #a5efd3; }
-.btn--primary:hover { background: #b7f8e0; box-shadow: none; }
 
 /* Preparation keeps the camera clear: one reason, one help button. */
 .workout .stagepanel--bottom .setup--compact {

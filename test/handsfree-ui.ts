@@ -1,7 +1,7 @@
 /** Integration: only synthetic body input after camera permission; real screens, gestures and engine. */
-import '../src/styles/base.css'; import '../src/styles/layout.css'; import '../src/styles/components.css';
-import '../src/styles/screens.css'; import '../src/styles/guidance.css'; import '../src/styles/handsfree.css'; import '../src/styles/mobile.css';
+import '../src/styles/app.css';
 import { TutorialScreen } from '../src/ui/screens/tutorial';
+import { WelcomeScreen } from '../src/ui/screens/welcome';
 import { MenuScreen } from '../src/ui/screens/menu';
 import { PreviewScreen } from '../src/ui/screens/preview';
 import { WorkoutScreen } from '../src/ui/screens/workout';
@@ -11,7 +11,7 @@ import { SettingsScreen } from '../src/ui/screens/settings';
 import type { GestureName } from '../src/gestures/uiGestures';
 import { GestureEngine } from '../src/gestures/uiGestures';
 import { HandsFreeControls } from '../src/ui/handsFree';
-import { BottomNavigation } from '../src/ui/navigation';
+import { AppNavigation } from '../src/ui/navigation';
 import { VoiceCoach } from '../src/ui/coach'; import { SoundKit } from '../src/ui/sound';
 import type { AppApi, Route, Screen } from '../src/core/screen';
 import { pose } from './synthetic'; import { LANDMARK_INDEX as I } from '../src/vision/landmarks';
@@ -23,7 +23,10 @@ import { DemoSimulation } from '../src/demo/simulation';
 const ui = document.querySelector<HTMLElement>('#ui')!;
 const report = document.querySelector<HTMLElement>('#report')!;
 const controls = new HandsFreeControls(ui, () => {}), engine = new GestureEngine();
-const navigation = new BottomNavigation(route => app.go(route));
+// Explicit fixture switch only: production detects Capacitor, never a query or viewport.
+const platform = new URLSearchParams(location.search).has('android') ? 'android' : 'web';
+document.documentElement.dataset.platform = platform;
+const navigation = new AppNavigation(route => app.go(route), platform);
 let screen: Screen, route: Route, t = 1000;
 const trail: string[] = [], saved: StoredSession[] = [];
 // Simulate native SystemBars CSS insets; WebView device testing is separate.
@@ -37,12 +40,12 @@ const app = {
   fx: { float() {}, burst() {}, clear() {} },
   go(next: Route) {
     screen?.unmount(); route = next; engine.clearCooldown(); trail.push(next.name);
-    screen = next.name === 'tutorial' ? new TutorialScreen(app) : next.name === 'preview' ? new PreviewScreen(app, next.plan)
+    screen = next.name === 'welcome' ? new WelcomeScreen(app) : next.name === 'tutorial' ? new TutorialScreen(app) : next.name === 'preview' ? new PreviewScreen(app, next.plan)
       : next.name === 'workout' ? new WorkoutScreen(app, next.plan) : next.name === 'results' ? new ResultsScreen(app, next.result, next.records, next.savedId)
       : next.name === 'history' ? new HistoryScreen(app) : next.name === 'settings' ? new SettingsScreen(app)
       : new MenuScreen(app, next.name === 'menu' ? next.section : 'programs');
     ui.innerHTML = '<div class="screenhost"></div>'; screen.mount(ui.firstElementChild as HTMLElement);
-    navigation.update(next); ui.append(controls.element, navigation.element);
+    navigation.update(next); ui.append(controls.element); navigation.mount(ui);
   },
 } as unknown as AppApi;
 app.coach.setEnabled(false); app.sound.setEnabled(false);
@@ -82,9 +85,16 @@ async function choose(selector: string, activate = true) {
 function layout(label: string) {
   expect(document.documentElement.scrollWidth <= innerWidth, `${label}: нет горизонтального обрезания`);
   const nav = navigation.element.getBoundingClientRect(), host = ui.querySelector('.screenhost')!.getBoundingClientRect();
-  if (!navigation.element.hidden) expect(host.bottom <= nav.top && nav.bottom <= innerHeight - (location.search ? 24 : 0), `${label}: навигация не закрывает контент и системную панель`);
+  if (!navigation.element.hidden) {
+    const inset = new URLSearchParams(location.search).has('insets') ? 24 : 0;
+    expect(platform === 'android' ? host.bottom <= nav.top && nav.bottom <= innerHeight - inset : nav.bottom <= host.top && nav.top >= inset,
+      `${label}: навигация ${platform === 'android' ? 'снизу в APK' : 'сверху в браузере'}, контент не перекрыт`);
+  }
 }
 async function run() {
+  if (new URLSearchParams(location.search).has('welcome')) {
+    app.go({ name: 'welcome' }); await paint(); layout('Главная'); report.hidden = true; return;
+  }
   // The only external route transition represents camera permission granted.
   app.go({ name: 'tutorial' }); await paint(); tick(pose());
   expect(ui.querySelectorAll('.lesson').length === 3 && !ui.querySelector('[data-action="dwell"]'), 'три разных движения, задания с ладонью нет');
@@ -161,6 +171,6 @@ async function run() {
   await choose('[data-tab="history"]'); layout('Прогресс');
   await choose('[data-tab="programs"]');
   expect(!document.querySelector('.hand-cursor'), 'курсора ладони нет на всём маршруте');
-  report.textContent += `\nPASS · ${innerWidth}×${innerHeight}${location.search ? ' · insets 24/24' : ''} · NO TOUCH\n${trail.join(' → ')}`;
+  report.textContent += `\nPASS · ${platform} · ${innerWidth}×${innerHeight}${new URLSearchParams(location.search).has('insets') ? ' · insets 24/24' : ''} · NO TOUCH\n${trail.join(' → ')}`;
 }
 void run().catch(error => { report.textContent += `\nFAIL: ${error.message}\n${trail.join(' → ')}`; console.error(error); });

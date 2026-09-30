@@ -10,19 +10,13 @@
   max-width: 520px;
 }
 
-/* На широком экране фигура и текст стоят рядом: так композиция собрана, а чипу
-   со счётчиком хватает места справа от силуэта. */
-@media (min-width: 900px) and (min-height: 560px) {
-  .welcome {
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(28px, 5vw, 72px);
-  }
-
-  .hero {
-    width: min(280px, 26vw);
-  }
+.welcome__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 3vh, 28px);
+  width: 100%;
+  flex-shrink: 0;
 }
 
 /* Анимация приседа: три позы с перекрёстным затуханием. Рисунок намеренно

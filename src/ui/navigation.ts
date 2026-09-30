@@ -7,19 +7,28 @@ const ITEMS = [
   { id: 'settings', label: 'Настройки', path: 'M4 7h7m4 0h5M4 17h3m4 0h9 M11 4v6m-4 4v6', route: { name: 'settings' } },
 ] satisfies { id: string; label: string; path: string; route: Route }[];
 
-/** Part of the layout, never floats over the last card or a system gesture bar. */
-export class BottomNavigation {
+export type InterfacePlatform = 'web' | 'android';
+
+/** Web header or native bottom tabs. Both participate in layout and use the same routes. */
+export class AppNavigation {
   readonly element = document.createElement('nav');
-  constructor(navigate: (route: Route) => void) {
-    this.element.className = 'bottom-nav';
+  constructor(navigate: (route: Route) => void, private readonly platform: InterfacePlatform) {
+    this.element.className = platform === 'android' ? 'bottom-nav' : 'web-nav';
     this.element.setAttribute('aria-label', 'Разделы приложения');
-    this.element.innerHTML = ITEMS.map(item => `<button data-tab="${item.id}"><span class="bottom-nav__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${item.path}"/></svg></span><span>${item.label}</span></button>`).join('');
+    const items = ITEMS.map(item => `<button data-tab="${item.id}">${platform === 'android' ? `<span class="bottom-nav__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${item.path}"/></svg></span>` : ''}<span>${item.label}</span></button>`).join('');
+    this.element.innerHTML = platform === 'android' ? items
+      : `<div class="web-nav__inner"><button class="web-nav__brand" data-action="home" data-gesture-exclude aria-label="Зеркало — главная">Зеркало<span aria-hidden="true">/</span></button><div class="web-nav__links">${items}</div></div>`;
+    this.element.querySelector('[data-action="home"]')?.addEventListener('click', () => navigate({ name: 'welcome' }));
     for (const item of ITEMS) this.element.querySelector(`[data-tab="${item.id}"]`)!.addEventListener('click', () => navigate(item.route));
+  }
+  mount(ui: HTMLElement): void {
+    if (this.platform === 'android') ui.append(this.element);
+    else ui.prepend(this.element);
   }
   update(route: Route): void {
     this.element.hidden = route.name === 'workout' || route.name === 'preview' || route.name === 'tutorial';
     const active = route.name === 'menu' ? route.section ?? 'programs'
-      : route.name === 'welcome' ? 'programs' : route.name === 'results' ? 'history' : route.name;
+      : route.name === 'welcome' ? (this.platform === 'android' ? 'programs' : '') : route.name === 'results' ? 'history' : route.name;
     for (const item of ITEMS) {
       const button = this.element.querySelector(`[data-tab="${item.id}"]`)!;
       if (item.id === active) button.setAttribute('aria-current', 'page');

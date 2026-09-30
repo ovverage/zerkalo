@@ -14,13 +14,7 @@ import '@fontsource/inter/cyrillic-500.css';
 import '@fontsource/inter/cyrillic-600.css';
 import '@fontsource/inter/cyrillic-800.css';
 
-import './styles/base.css';
-import './styles/layout.css';
-import './styles/components.css';
-import './styles/screens.css';
-import './styles/guidance.css';
-import './styles/handsfree.css';
-import './styles/mobile.css';
+import './styles/app.css';
 
 function need<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);

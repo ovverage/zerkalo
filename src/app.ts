@@ -32,7 +32,7 @@ import { WorkoutScreen } from './ui/screens/workout';
 import { ResultsScreen } from './ui/screens/results';
 import { HistoryScreen } from './ui/screens/history';
 import { HandsFreeControls } from './ui/handsFree';
-import { BottomNavigation } from './ui/navigation';
+import { AppNavigation } from './ui/navigation';
 import { SettingsScreen } from './ui/screens/settings';
 import { DemoSimulation } from './demo/simulation';
 import { Capacitor } from '@capacitor/core';
@@ -62,7 +62,7 @@ export class App implements AppApi {
   private readonly probe = new BrightnessProbe();
   private readonly els: AppElements;
   private readonly handsFree: HandsFreeControls;
-  private readonly navigation: BottomNavigation;
+  private readonly navigation: AppNavigation;
   private readonly simulation = new DemoSimulation();
   private slowSince: number | null = null;
   private visionStartedAt = 0;
@@ -82,7 +82,10 @@ export class App implements AppApi {
 
   constructor(els: AppElements) {
     this.els = els;
-    this.navigation = new BottomNavigation(route => this.go(route));
+    // A narrow browser (including Chrome on Android) remains the web interface.
+    const platform = Capacitor.getPlatform() === 'android' ? 'android' : 'web';
+    document.documentElement.dataset.platform = platform;
+    this.navigation = new AppNavigation(route => this.go(route), platform);
     this.handsFree = new HandsFreeControls(els.ui, () => {
       if (this.switchingModel) return;
       this.switchingModel = true;
@@ -232,7 +235,8 @@ export class App implements AppApi {
     this.els.ui.appendChild(host);
     this.screen.mount(host);
     this.navigation.update(route);
-    this.els.ui.append(this.handsFree.element, this.navigation.element);
+    this.els.ui.append(this.handsFree.element);
+    this.navigation.mount(this.els.ui);
     if (document.hidden) this.screen.onVisibilityChange(true, performance.now());
     if (this.sourceKind === 'demo' && route.name !== 'welcome') {
       const banner = document.createElement('aside');

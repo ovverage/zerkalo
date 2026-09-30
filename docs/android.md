@@ -51,7 +51,7 @@ cd android
 
 ## Устройство интерфейса
 
-Capacitor 8 `SystemBars` передаёт системные отступы в CSS. Оболочка `.ui` применяет их один раз через `--app-safe-*`; предусмотрен fallback на `env(safe-area-inset-*)`. Нижнее меню находится вне прокручиваемого `.screenhost`. В старых WebView встроенный механизм Capacitor также учитывает системные панели. Конфигурация находится в `capacitor.config.ts`, стили — в `src/styles/mobile.css`.
+Capacitor 8 `SystemBars` передаёт системные отступы в CSS. Оболочка `.ui` применяет их один раз через `--app-safe-*`; предусмотрен fallback на `env(safe-area-inset-*)`. Нижнее меню находится вне прокручиваемого `.screenhost`. В старых WebView встроенный механизм Capacitor также учитывает системные панели. Конфигурация находится в `capacitor.config.ts`, общая геометрия — в `src/styles/shell.css`, оформление APK — в `src/styles/android.css`. В браузере используются верхнее меню и `web.css`; Android-слой включается только внутри Capacitor.
 
 ## Проверка 30 сентября 2026
 

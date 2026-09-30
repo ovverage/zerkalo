@@ -1,0 +1,36 @@
+/* Android appearance is exclusive to the Capacitor APK, never inferred from screen width. */
+:where([data-platform='android']) .bottom-nav { flex: none; width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px max(8px, calc((100% - 680px) / 2)) 10px; gap: 2px; background: #12202d; border-top: 1px solid #293b4a; }
+:where([data-platform='android']) .bottom-nav button { min-width: 0; min-height: 60px; padding: 0 2px; display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; color: #aebdcc; font-size: 11px; font-weight: 500; }
+:where([data-platform='android']) .bottom-nav__icon { width: 58px; height: 30px; display: grid; place-items: center; border-radius: 20px; transition: background .15s; }
+:where([data-platform='android']) .bottom-nav svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+:where([data-platform='android']) .bottom-nav [aria-current] { color: #acf3dd; }
+:where([data-platform='android']) .bottom-nav [aria-current] .bottom-nav__icon { background: #254940; }
+:where([data-platform='android']) .menu__title { font-size: 30px; letter-spacing: -.04em; }
+:where([data-platform='android']) .menu__sub { font-size: 18px; }
+:where([data-platform='android']) .menu .card { border-radius: 22px; padding: 20px; gap: 8px; border-color: #2c3d4f; }
+:where([data-platform='android']) .menu .card--accent { background: linear-gradient(140deg, #214e46, #152e36); border-color: #437865; }
+:where([data-platform='android']) .menu .card__name { font-size: 19px; }
+:where([data-platform='android']) .menu .card__desc { font-size: 14px; line-height: 1.55; }
+:where([data-platform='android']) .menu .card__list { color: #b0c3cd; }
+:where([data-platform='android']) .menu .chip { border-radius: 20px; }
+:where([data-platform='android']) .menu .chip__name { font-size: 16px; }
+:where([data-platform='android']) .menu .chip__camera { font-size: 12px; }
+:where([data-platform='android']) .menu .chip__play { font-size: 10px; }
+:where([data-platform='android']) .btn--primary { background: #a5efd3; color: #0b3528; box-shadow: none; border-color: #a5efd3; }
+:where([data-platform='android']) .btn--primary:hover { background: #b7f8e0; box-shadow: none; }
+@media(max-width: 760px), (max-height: 560px) {
+  :where([data-platform='android']) .welcome .hero { width: 96px; margin: 12px auto 20px; }
+  :where([data-platform='android']) .welcome .panel { padding: 22px; }
+  :where([data-platform='android']) .welcome .brand__name { font-size: 36px; }
+  :where([data-platform='android']) .welcome .row--buttons { align-items: stretch; flex-direction: column; }
+  :where([data-platform='android']) .welcome .bullets li { font-size: 14px; }
+  :where([data-platform='android']) .menu__title { font-size: 28px; }
+  :where([data-platform='android']) .menu .card { padding: 18px; }
+  :where([data-platform='android']) .menu .chip__body { padding: 13px 11px; }
+  :where([data-platform='android']) .menu .chip__name { font-size: 15px; }
+}
+@media(max-height: 500px) and (min-width: 600px) {
+  :where([data-platform='android']) .bottom-nav { padding-top: 4px; padding-bottom: 4px; }
+  :where([data-platform='android']) .bottom-nav button { min-height: 48px; flex-direction: row; font-size: 12px; gap: 6px; }
+  :where([data-platform='android']) .bottom-nav__icon { width: 42px; }
+}
