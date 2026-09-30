@@ -249,6 +249,8 @@ code {
 }
 
 .btn--primary {
+  display: flex;
+  align-items: center;
   background: linear-gradient(135deg, var(--accent) 0%, #4ec9ec 100%);
   border-color: transparent;
   color: #05202b;
