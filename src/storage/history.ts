@@ -7,6 +7,7 @@
  * ломал бы экран истории.
  */
 
+import type { Correction } from '../engine/corrections';
 import type { SessionResult } from '../engine/session';
 
 const KEY = 'zerkalo.history.v1';
@@ -24,6 +25,13 @@ export interface StoredExercise {
 
 export interface StoredSession {
   fixedErrors?: number;
+  corrections?: readonly Correction[];
+  attempts?: number;
+  measurementVersion?: string;
+  plannedActiveMs?: number;
+  activeMs?: number;
+  planKey?: string;
+  model?: string;
   challenge?: boolean;
   id: string;
   workoutId: string;
@@ -74,6 +82,13 @@ export class History {
   add(result: SessionResult): { session: StoredSession; records: NewRecord[] } {
     const session: StoredSession = {
       fixedErrors: result.fixedErrors,
+      corrections: result.corrections,
+      attempts: result.exercises.reduce((sum, e) => sum + e.attempts, 0),
+      measurementVersion: result.measurementVersion,
+      plannedActiveMs: result.plannedActiveMs,
+      activeMs: result.activeMs,
+      planKey: result.planKey,
+      model: result.model,
       challenge: result.challenge,
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       workoutId: result.workoutId,

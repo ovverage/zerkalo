@@ -4,7 +4,7 @@ import { exerciseGuide, exerciseMedia } from '../exercises/guides';
 import { GROUP_LABEL } from '../exercises/registry';
 
 export function guideVideo(spec: ExerciseSpec): string {
-  return `<div class="guide-media">
+  return `<div class="guide-media" data-gesture-section data-gesture-label="Видеопоказ">
     <video class="guide-video" data-guide-video muted loop playsinline controls preload="metadata"
       poster="${exerciseMedia(spec.id, 'svg')}" aria-label="Видеопоказ: ${esc(spec.name)}">
       <source src="${exerciseMedia(spec.id, 'mp4')}" type="video/mp4">
@@ -22,12 +22,12 @@ export function guideContent(spec: ExerciseSpec): string {
     </div>
     <div class="exercise-guide__details">
       <p class="guide-eyebrow">${GROUP_LABEL[spec.group]} · ${spec.mode === 'hold' ? 'Удержание позы' : 'Повторения'}</p>
-      <section class="guide-section"><h3>01 <span>Исходная поза</span></h3><p>${esc(guide.start)}</p></section>
-      <section class="guide-section guide-section--camera"><h3>02 <span>Куда поставить камеру</span></h3>
+      <section class="guide-section" data-gesture-section data-gesture-label="Исходная поза"><h3>01 <span>Исходная поза</span></h3><p>${esc(guide.start)}</p></section>
+      <section class="guide-section guide-section--camera" data-gesture-section data-gesture-label="Положение камеры"><h3>02 <span>Куда поставить камеру</span></h3>
         <strong>${esc(guide.camera)}</strong><p>${esc(guide.placement)}</p>
         <p class="guide-visible"><b>В кадре:</b> ${esc(guide.visible)}</p>
       </section>
-      <section class="guide-section"><h3>03 <span>Как двигаться</span></h3>
+      <section class="guide-section" data-gesture-section data-gesture-label="Как двигаться"><h3>03 <span>Как двигаться</span></h3>
         <ol>${spec.howTo.map((step) => `<li>${esc(step)}</li>`).join('')}</ol>
       </section>
     </div>

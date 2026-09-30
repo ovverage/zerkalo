@@ -8,6 +8,7 @@ import { esc } from '../../core/dom';
 import { guideContent, playGuideVideos, stopGuideVideos } from '../exerciseGuide';
 
 export class PreviewScreen extends Screen {
+  override get gestureNavigation() { return { key: 'preview', defaultAction: 'start' }; }
   private index = 0;
   private busy = false;
   private disposed = false;
@@ -27,7 +28,7 @@ export class PreviewScreen extends Screen {
       ${this.plan.steps.length > 1 ? `<nav class="preview__steps" aria-label="Упражнения программы">${this.plan.steps.map((step, i) =>
         `<button class="toggle" data-action="step-${i}" aria-pressed="${i === 0}">${i + 1}. ${esc(requireExercise(step.exerciseId).short)}</button>`).join('')}</nav>` : ''}
       <div data-el="guide"></div>
-      <footer class="preview__foot"><p>Тренер озвучивает важные ошибки с паузой от 10 секунд.<br><span>Повтор одной ошибки — не чаще раза в 30 секунд.</span></p>
+      <div class="gesture-pages" aria-label="Чтение экрана"><button class="btn btn--ghost" data-gesture-scroll="up">↑ Выше</button><button class="btn btn--ghost" data-gesture-scroll="down">↓ Ниже</button></div><footer class="preview__foot"><p>Тренер озвучивает важные ошибки с паузой от 10 секунд.<br><span>Повтор одной ошибки — не чаще раза в 30 секунд.</span></p>
         <button class="btn btn--primary" data-action="start">${this.startLabel()}</button>
         <p class="preview__error" data-el="error" role="status" hidden></p>
       </footer>

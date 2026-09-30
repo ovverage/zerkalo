@@ -13,13 +13,16 @@ import type { GestureName } from '../../gestures/uiGestures';
 import type { ExerciseResult, SessionResult } from '../../engine/session';
 import type { NewRecord } from '../../storage/history';
 import { duration, esc, plural, qualityTone } from '../../core/dom';
+import { comparableAttempt, attemptsIn, acceptance } from '../../storage/comparison';
 import { workoutById } from '../../exercises/registry';
 
 export class ResultsScreen extends Screen {
+  override get gestureNavigation() { return { key: 'results', defaultAction: 'again' }; }
   constructor(
     app: AppApi,
     private readonly result: SessionResult,
     private readonly records: readonly NewRecord[],
+    private readonly savedId?: string,
   ) {
     super(app);
   }
@@ -45,9 +48,10 @@ export class ResultsScreen extends Screen {
 
         ${this.recordsHtml()}
 
-        <div class="stats">
+        <div class="stats" data-gesture-section data-gesture-label="Показатели тренировки">
           ${stat(String(r.totalReps), plural(r.totalReps, 'повторение', 'повторения', 'повторений'))}
           ${r.totalHoldSec > 0 ? stat(`${r.totalHoldSec} с`, 'удержание') : ''}
+          ${attemptsIn(r) ? stat(`${acceptance(r.totalReps, attemptsIn(r))}%`, `зачтено из ${attemptsIn(r)} попыток`) : ''}
           ${stat(duration(r.durationMs), 'время')}
           ${stat(`${r.avgQuality}%`, 'качество техники')}
           ${r.challenge ? stat(String(r.fixedErrors), 'исправленных правил амплитуды') : ''}
@@ -61,14 +65,15 @@ export class ResultsScreen extends Screen {
           ${r.exercises.map((e) => this.exerciseHtml(e)).join('')}
         </div>
 
+        ${this.correctionsHtml()}
         ${this.mistakesHtml()}
 
-        <div class="row row--buttons">
+        <div class="gesture-pages" aria-label="Чтение экрана"><button class="btn btn--ghost" data-gesture-scroll="up">↑ Выше</button><button class="btn btn--ghost" data-gesture-scroll="down">↓ Ниже</button></div><div class="row row--buttons">
           <button class="btn btn--primary" data-action="again">Ещё раз</button>
           <button class="btn btn--ghost" data-action="menu">К тренировкам</button>
           <button class="btn btn--link" data-action="history">Прогресс</button>
         </div>
-        <p class="note">Скрести руки, чтобы повторить тренировку.</p>
+        <p class="note">Крест подтверждает выделенный пункт. Левая и правая рука в сторону меняют выбор.</p>
       </div>
     `;
   }
@@ -115,12 +120,23 @@ export class ResultsScreen extends Screen {
   }
 
   private comparisonHtml(): string {
-    if (!this.result.challenge || this.result.source === 'simulation') return '';
-    const attempts = this.app.history.list().filter(s => s.workoutId === this.result.workoutId);
-    const previous = attempts[1];
-    if (!previous) return '<p class="alert alert--good">Первая попытка сохранена. После следующей здесь появится сравнение.</p>';
-    const diff = this.result.avgQuality - previous.avgQuality;
-    return `<p class="alert alert--good">Предыдущая попытка: ${previous.totalReps} повт. · ${previous.avgQuality}% · исправлено ${previous.fixedErrors ?? 0}. Сейчас: ${this.result.totalReps} повт. · ${this.result.avgQuality}% (${diff >= 0 ? '+' : ''}${diff} п.п.) · исправлено ${this.result.fixedErrors}.</p>`;
+    const r = this.result;
+    if (!r.challenge || r.source === 'simulation') return '';
+    const previous = comparableAttempt(r, this.app.history.list(), this.savedId);
+    if (!previous) return '<p class="alert" data-gesture-section data-gesture-label="Условия сравнения">Сравнение появится после двух полных попыток по 75 секунд, минимум по 3 завершённых движения. Нужны одинаковая программа, модель и версия правил. Незачтённые попытки тоже учитываются.</p>';
+    const before = acceptance(previous.totalReps, previous.attempts!);
+    const now = acceptance(r.totalReps, attemptsIn(r));
+    const names = (items: readonly { title: string }[]) => items.length ? items.map(c => esc(c.title)).join(' · ') : 'Не было подтверждённых исправлений';
+    return `<section class="attempt-comparison" data-gesture-section data-gesture-label="Сравнение попыток"><h3>Две попытки · по 75 секунд</h3>
+      <p>Та же программа, модель и правила. Изменение доли зачёта: ${now - before >= 0 ? '+' : ''}${now - before} п.п.</p>
+      <div class="attempt-comparison__grid"><article><h4>Предыдущая</h4><b>${previous.totalReps} повт.</b><p>${before}% зачтено · ${previous.totalReps} из ${previous.attempts}</p><p>Исправления: ${names(previous.corrections!)}</p></article>
+      <article><h4>Сейчас</h4><b>${r.totalReps} повт.</b><p>${now}% зачтено · ${r.totalReps} из ${attemptsIn(r)}</p><p>Исправления: ${names(r.corrections)}</p></article></div>
+      <p class="note">Сравнивай при похожих условиях съёмки. Больше исправлений не значит лучше: выполнить без ошибок — хороший результат.</p></section>`;
+  }
+
+  private correctionsHtml(): string {
+    if (!this.result.corrections.length) return '';
+    return `<section class="alert alert--good" data-gesture-section data-gesture-label="Подтверждённые исправления"><h3>Получилось исправить</h3><ul>${this.result.corrections.map(c => `<li><b>${esc(c.title)}</b> — ${esc(c.message)}</li>`).join('')}</ul><p>Каждое правило проверено в следующем зачтённом повторе. Это исправления за попытку; замечания ниже могут относиться к более ранним повторам.</p></section>`;
   }
 
   private recordsHtml(): string {
@@ -143,7 +159,7 @@ export class ResultsScreen extends Screen {
     const missed = e.mode === 'reps' ? Math.max(e.attempts - e.done, 0) : 0;
 
     return `
-      <div class="exrow">
+      <div class="exrow" data-gesture-section data-gesture-label="${esc(e.name)}: результат">
         <span class="exrow__icon">${e.icon}</span>
         <div class="exrow__body">
           <div class="exrow__top">
@@ -151,7 +167,7 @@ export class ResultsScreen extends Screen {
             <span class="exrow__count">${e.done}${unit}${this.result.challenge ? ' повт.' : ` / ${e.target}${unit}`}</span>
           </div>
           <div class="exrow__bar">
-            <i style="width:${Math.round(Math.min(e.done / Math.max(e.target, 1), 1) * 100)}%"></i>
+            <i style="width:${Math.round(Math.min(e.done / Math.max(this.result.challenge ? e.attempts : e.target, 1), 1) * 100)}%"></i>
           </div>
           <div class="exrow__meta">
             <span data-tone="${qualityTone(e.avgQuality)}">качество ${e.avgQuality}%</span>
@@ -168,7 +184,7 @@ export class ResultsScreen extends Screen {
     if (top.length === 0) {
       return `
         <div class="alert alert--good">
-          ${this.result.totalReps + this.result.totalHoldSec > 0 ? 'В завершённых движениях проверяемых ошибок не обнаружено. Исправления не выдумываем.' : 'Недостаточно завершённых движений для вывода о технике.'}
+          ${this.result.totalReps + this.result.totalHoldSec > 0 ? 'В завершённых движениях проверяемых ошибок не обнаружено. Хорошая работа.' : 'Недостаточно завершённых движений для вывода о технике.'}
         </div>`;
     }
 
@@ -178,7 +194,7 @@ export class ResultsScreen extends Screen {
         ${top
           .map(
             (m) => `
-          <li class="mistake">
+          <li class="mistake" data-gesture-section data-gesture-label="${esc(m.title)}">
             <div class="mistake__head">
               <b>${esc(m.title)}</b>
               <span class="mistake__count">${m.count} ${plural(m.count, 'раз', 'раза', 'раз')}</span>

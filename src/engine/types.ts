@@ -115,7 +115,7 @@ export interface RepRecord extends RepDraft {
   violations: readonly ScoredViolation[];
 }
 
-export interface ScoredViolation {
+export interface ScoredViolation extends Violation {
   ruleId: string;
   title: string;
   severity: Severity;

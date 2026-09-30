@@ -79,14 +79,14 @@ export interface WorkoutPlan {
  */
 export const WORKOUTS: readonly WorkoutPlan[] = [
   {
-    id: 'motion', name: 'Три движения · MOTION', description: 'Присед, джампы и жим. По 3 повтора, одна камера спереди.',
-    icon: '◉', minutes: 1, restSec: 5,
-    steps: [{ exerciseId: 'squat', target: 3 }, { exerciseId: 'jumping-jack', target: 3 }, { exerciseId: 'overhead-press', target: 3 }],
-  },
-  {
     id: 'repair', name: 'Зеркало: исправь движение', description: '75 секунд приседаний в удобном темпе. Заметь подсказку, проверь исправление, сравни попытки.',
     icon: '✦', minutes: 1, restSec: 0, durationSec: 75,
     steps: [{ exerciseId: 'squat', target: 999 }],
+  },
+  {
+    id: 'motion', name: 'Три движения · MOTION', description: 'Присед, джампы и жим. По 3 повтора, одна камера спереди.',
+    icon: '◉', minutes: 1, restSec: 5,
+    steps: [{ exerciseId: 'squat', target: 3 }, { exerciseId: 'jumping-jack', target: 3 }, { exerciseId: 'overhead-press', target: 3 }],
   },
   {
     id: 'quick',

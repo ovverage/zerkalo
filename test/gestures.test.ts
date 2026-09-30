@@ -112,3 +112,56 @@ test('краткое скрещение не ставит паузу, удерж
   }
   assert.deepEqual(events, ['cross', 'cross']);
 });
+
+function sideArm(side: 'left' | 'right') {
+  const body = pose({ armElevation: 90 });
+  const rest = pose();
+  for (const index of side === 'left' ? [14, 16] : [13, 15]) {
+    body.world[index] = rest.world[index]!; body.screen[index] = rest.screen[index]!;
+  }
+  return body;
+}
+
+test('разные руки дают предыдущий/следующий пункт только при разрешённой навигации', () => {
+  for (const side of ['left', 'right'] as const) {
+    for (const navigation of [false, true]) {
+      const engine = new GestureEngine(), events: GestureName[] = [];
+      for (let t = 0; t < 2500; t += FRAME_MS) {
+        const frame = engine.update(sideArm(side), t, navigation);
+        if (frame.fired) events.push(frame.fired);
+      }
+      assert.deepEqual(events, navigation ? [side === 'left' ? 'previous' : 'next'] : []);
+    }
+  }
+});
+
+test('выбор требует отпускания; смена экрана, потеря тела и другая рука его не заменяют', () => {
+  const engine = new GestureEngine(), events: string[] = [];
+  for (let t = 0; t < 7000; t += FRAME_MS) {
+    const body = t < 2000 ? sideArm('left') : t < 2600 ? null : t < 4200 ? sideArm('right') : t < 4900 ? pose() : sideArm('right');
+    const frame = engine.update(body, t, true);
+    if (frame.fired) { events.push(frame.fired); engine.clearCooldown(); }
+  }
+  assert.deepEqual(events, ['previous', 'next']);
+});
+
+test('джамп, жим, обе руки в стороны и неуверенные суставы не выбирают пункты даже в меню', () => {
+  const poses = [pose({ armElevation: 90 }), pose({ armElevation: 172, elbowBend: 175 }), pose({ armElevation: 168, ankleHalf: .33 }), sideArm('left')];
+  poses[3]!.visibility[15] = .4;
+  for (const body of poses) {
+    const engine = new GestureEngine();
+    for (let t = 0; t < 2500; t += FRAME_MS) assert.equal(engine.update(body, t, true).fired, null);
+  }
+});
+
+test('один результат модели не подтверждает удержание и не отпускает команду', () => {
+  const engine = new GestureEngine();
+  const frozen = { ...crossed(), sampleId: 1, t: 0 };
+  for (let t = 0; t < 2000; t += 10) assert.equal(engine.update(frozen, t).fired, null);
+  let count = 0;
+  for (let t = 2000; t < 3100; t += 50) if (engine.update({ ...crossed(), sampleId: t, t }, t).fired) count++;
+  assert.equal(count, 1);
+  const release = { ...pose(), sampleId: 9999, t: 3100 };
+  for (let t = 3100; t < 3800; t += 10) engine.update(release, t);
+  for (let t = 3800; t < 6000; t += 50) assert.equal(engine.update({ ...crossed(), sampleId: t, t }, t).fired, null);
+});

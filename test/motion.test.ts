@@ -197,3 +197,26 @@ test('пауза между кадрами учитывает точное вр�
   assert.equal(session.update(pose(), 142199, .5).state, 'running');
   assert.equal(session.update(pose(), 142200, .5).state, 'done');
 });
+
+for (const c of CASES) {
+  test(`${c.id}: повторные и устаревшие результаты не создают повтор/исправление`, () => {
+    const r = runner(c.id, c.rest);
+    r.play(cycle(c.rest, c.shallow));
+    const errorsBefore = r.events.length;
+    const peak = { ...pose(c.peak), sampleId: 1, t: r.t + 1000 / 30 };
+    for (let i = 0; i < 90; i++) r.feed(peak);
+    assert.equal(r.events.length, errorsBefore);
+    r.play(hold(c.rest, 40));
+    assert.equal(r.events.length, errorsBefore, 'старый пик не склеивается с новой исходной позой');
+    r.play(cycle(c.rest, c.peak));
+    assert.ok(r.events.at(-1)!.corrections.some(fix => fix.ruleId === c.rule));
+    const result = r.session.finish(r.t);
+    assert.ok(result.corrections.some(fix => fix.ruleId === c.rule && fix.title.length > 5));
+  });
+}
+
+test('ошибка амплитуды сохраняет нужные суставы для подсветки завершённого повтора', () => {
+  const r = runner('squat', CASES[0]!.rest);
+  r.play(cycle(CASES[0]!.rest, CASES[0]!.shallow));
+  assert.deepEqual(r.events[0]!.feedback?.highlight, ['knees', 'hips']);
+});

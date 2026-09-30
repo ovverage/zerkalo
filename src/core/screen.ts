@@ -26,7 +26,7 @@ export type Route =
   | { name: 'settings' }
   | { name: 'preview'; plan: WorkoutPlan }
   | { name: 'workout'; plan: WorkoutPlan }
-  | { name: 'results'; result: SessionResult; records: readonly NewRecord[] }
+  | { name: 'results'; result: SessionResult; records: readonly NewRecord[]; savedId?: string }
   | { name: 'history' };
 
 export type SourceKind = 'camera' | 'demo';
@@ -77,6 +77,9 @@ export abstract class Screen {
   /** Модель можно менять только вне активного движения. */
   get canChangeModel(): boolean { return true; }
   get gestureHint(): string { return ''; }
+  /** null отключает выбор кнопок во время упражнения и собственного урока. */
+  get gestureNavigation(): { key: string; defaultAction?: string } | null { return null; }
+  get navigationGestures(): boolean { return this.gestureNavigation !== null; }
   onBack(): boolean { return false; }
 
   constructor(protected readonly app: AppApi) {}

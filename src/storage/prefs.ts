@@ -13,6 +13,7 @@ export interface Prefs {
   voice: boolean;
   mirrored: boolean;
   tutorialDone: boolean;
+  tutorialVersion: number;
   model: ModelQuality;
   visionVersion: number;
 }
@@ -22,6 +23,7 @@ const DEFAULTS: Prefs = {
   voice: true,
   mirrored: true,
   tutorialDone: false,
+  tutorialVersion: 2,
   model: 'heavy',
   visionVersion: 2,
 };
@@ -37,7 +39,8 @@ export function loadPrefs(): Prefs {
       sound: typeof p.sound === 'boolean' ? p.sound : DEFAULTS.sound,
       voice: typeof p.voice === 'boolean' ? p.voice : DEFAULTS.voice,
       mirrored: typeof p.mirrored === 'boolean' ? p.mirrored : DEFAULTS.mirrored,
-      tutorialDone: typeof p.tutorialDone === 'boolean' ? p.tutorialDone : DEFAULTS.tutorialDone,
+      tutorialDone: p.tutorialDone === true && p.tutorialVersion === 2,
+      tutorialVersion: 2,
       model: p.model === 'lite' || p.model === 'heavy' || (p.model === 'full' && p.visionVersion === 2)
         ? p.model : DEFAULTS.model,
       visionVersion: 2,

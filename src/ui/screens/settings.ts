@@ -10,6 +10,7 @@ const MODELS: { id: ModelQuality; name: string; hint: string }[] = [
 ];
 
 export class SettingsScreen extends Screen {
+  override get gestureNavigation() { return { key: 'settings', defaultAction: 'voice' }; }
   private busy = false;
   protected override template(): string {
     const prefs = loadPrefs();
@@ -24,8 +25,8 @@ export class SettingsScreen extends Screen {
         <div class="model-options" role="group" aria-label="Модель распознавания">${MODELS.map(m => `<button data-action="model-${m.id}" aria-pressed="${prefs.model === m.id}"><span class="model-radio" aria-hidden="true"></span><span><b>${m.name}</b><small>${m.hint}</small></span><span class="model-code">${m.id}</span></button>`).join('')}</div>
         <p class="settings-status" data-el="model-status" role="status"></p>
       </section>
-      <section class="settings-group"><h3>Управление</h3><p class="settings-note">Скрести руки на груди: начать, поставить паузу или продолжить. Между командами опусти руки. Поднятые руки не вызывают команд.</p><button class="settings-link" data-action="tutorial">Как пользоваться жестом <span>→</span></button></section>
-      <section class="settings-about"><b>Зеркало <span>1.2.0</span></b><p>Кадры остаются на устройстве. История хранится только здесь.</p><button class="btn btn--link" data-action="camera">${this.app.hasVision ? 'На стартовый экран' : 'Подключить камеру'}</button></section>
+      <section class="settings-group"><h3>Управление</h3><p class="settings-note">Скрести руки на груди: начать, поставить паузу или продолжить. Между командами опусти руки. В меню и на паузе вытянутая в сторону левая рука выбирает предыдущий пункт, правая — следующий. Две руки вверх ничего не переключают.</p><button class="settings-link" data-action="tutorial">Управление жестами <span>→</span></button></section>
+      <section class="settings-about"><b>Зеркало <span>1.3.0</span></b><p>Кадры остаются на устройстве. История хранится только здесь.</p><button class="btn btn--link" data-action="camera">${this.app.hasVision ? 'На стартовый экран' : 'Подключить камеру'}</button></section>
     </div>`;
   }
   private switchRow(key: string, title: string, hint: string, on: boolean): string {

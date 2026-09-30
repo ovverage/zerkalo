@@ -8,6 +8,7 @@ import type { DrawHints } from '../../core/screen';
 import { dateLabel, duration, esc, plural, qualityTone } from '../../core/dom';
 
 export class HistoryScreen extends Screen {
+  override get gestureNavigation() { return { key: 'history', defaultAction: 'back' }; }
   protected override template(): string {
     const totals = this.app.history.totals();
     const sessions = this.app.history.list();
@@ -97,7 +98,7 @@ export class HistoryScreen extends Screen {
         </div>
 
         <div class="row row--buttons">
-          <button class="btn btn--link btn--danger" data-action="clear">Очистить историю</button>
+          <button class="btn btn--link btn--danger" data-action="clear" data-gesture-exclude>Очистить историю</button>
         </div>
       </div>
     `;

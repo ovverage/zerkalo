@@ -271,7 +271,7 @@ export class App implements AppApi {
       case 'workout':
         return new WorkoutScreen(this, route.plan);
       case 'results':
-        return new ResultsScreen(this, route.result, route.records);
+        return new ResultsScreen(this, route.result, route.records, route.savedId);
       case 'history':
         return new HistoryScreen(this);
     }
@@ -305,10 +305,9 @@ export class App implements AppApi {
       this.slowSince !== null && now - this.slowSince > 5000 && loadPrefs().model !== 'lite',
       this.screen?.canChangeModel ?? false, this.switchingModel);
 
-    const gesture = this.gestures.update(demo ? null : body, now);
+    const gesture = this.gestures.update(demo ? null : body, now, this.screen?.navigationGestures);
     if (gesture.fired) {
-      this.handsFree.accepted('Крест принят', now);
-      this.screen?.onGesture(gesture.fired);
+      this.handsFree.dispatch(gesture.fired, this.screen, now);
     }
 
     const hints = this.screen?.update({ body, t: now, dt, gesture, brightness, fps: this.fps }) ?? {};

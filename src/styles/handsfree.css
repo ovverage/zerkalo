@@ -17,3 +17,16 @@
 .challenge-clock { color: #a2f7da; font-size: 16px; font-weight: 600; }
 .challenge-clock:empty { display: none; }
 .preview-readiness { border: 1px solid #426774; border-radius: 14px; background: #122b36; color: #ccf5ed; padding: 12px 16px; font-size: 14px; line-height: 1.5; }
+
+/* Selection stays visible over a bright camera. The command strip is in layout. */
+.gesture-selected { outline: 3px solid #91ffcf !important; outline-offset: -3px; box-shadow: 0 0 0 2px #071e18 !important; scroll-margin: 12px; }
+.handsfree__status { font-size: clamp(14px, 1.3vw, 19px); font-weight: 600; }
+.handsfree__directions { font-size: clamp(11px, 1vw, 14px); color: #bccedb; margin-top: 3px; }
+.gesture-pages { display: flex; gap: 10px; }
+.guide-dialog > .handsfree { position: sticky; bottom: 0; z-index: 4; }
+@media (min-width: 900px) { .gesture-selected { outline-width: 4px !important; } }
+.attempt-comparison { background: #112831; border: 1px solid #39645f; border-radius: 18px; padding: 20px; line-height: 1.6; }
+.attempt-comparison__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 16px 0; }
+.attempt-comparison article { background: #0b1d25; border-radius: 12px; padding: 14px; }
+.attempt-comparison article > b { font-size: 28px; color: #a4f4d7; }
+@media (max-width: 480px) { .attempt-comparison__grid { grid-template-columns: 1fr; } }

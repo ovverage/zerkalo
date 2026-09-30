@@ -8,6 +8,8 @@
  * подсказка обновляются точечно.
  */
 
+import { expandGroups } from '../../vision/landmarks';
+import type { LandmarkName } from '../../vision/landmarks';
 import { Screen } from '../../core/screen';
 import type { DrawHints, ScreenFrame } from '../../core/screen';
 import type { AppApi } from '../../core/screen';
@@ -23,6 +25,7 @@ import { loadPrefs, savePrefs } from '../../storage/prefs';
 export class WorkoutScreen extends Screen {
   private readonly session: WorkoutSession;
   private started = false;
+  private readonly measurementModels = new Set<string>();
   private lastState: SessionState | null = null;
   private lastPanelKey = '';
   private lastHintKey = '';
@@ -37,6 +40,7 @@ export class WorkoutScreen extends Screen {
   private feedbackUntil = 0;
   private feedbackText = '';
   private feedbackTone = '';
+  private feedbackHighlight = new Set<LandmarkName>();
 
   override get demoMotion() {
     return { exerciseId: this.session.currentSpec?.id ?? 'squat', running: this.session.currentState === 'running' };
@@ -55,6 +59,11 @@ export class WorkoutScreen extends Screen {
     // Смену модели предлагаем на паузе, чтобы не обрывать измерение повтора.
     const state = this.session.currentState;
     return state === 'paused' || state === 'rest';
+  }
+
+  override get gestureNavigation() {
+    return this.helpOpen ? { key: 'help', defaultAction: 'close-help' }
+      : this.session.currentState === 'paused' ? { key: 'paused', defaultAction: 'resume' } : null;
   }
 
   override get gestureHint(): string {
@@ -144,6 +153,7 @@ export class WorkoutScreen extends Screen {
     }
 
     const out = this.session.update(frame.body, frame.t, frame.brightness);
+    if (out.state === 'running' && this.lastState !== 'running') this.measurementModels.add(loadPrefs().model);
 
     if (out.state === 'done' && !this.finishing) {
       this.complete();
@@ -166,7 +176,7 @@ export class WorkoutScreen extends Screen {
 
     const running = out.state === 'running';
     return {
-      highlight: out.highlight,
+      highlight: running && tracked && this.feedbackUntil > frame.t ? this.feedbackHighlight : out.highlight,
       dim: !running,
       hide: out.state === 'rest',
       // Рамка следует за человеком, независимо от положения и ориентации.
@@ -181,6 +191,7 @@ export class WorkoutScreen extends Screen {
   }
 
   override onGesture(gesture: GestureName): void {
+    if (gesture !== 'cross') return;
     if (this.helpOpen) { this.closeHelp(); return; }
     if (gesture === 'cross') this.session.togglePause(this.now);
   }
@@ -228,7 +239,7 @@ export class WorkoutScreen extends Screen {
     stopGuideVideos(this.root);
     dialog.innerHTML = `<header class="guide-dialog__head"><div><p class="guide-eyebrow">Тренировка на паузе</p><h2 id="workout-guide-title">${esc(spec.name)}</h2></div>
       <button class="iconbtn" data-action="close-help" aria-label="Закрыть видеопоказ">✕</button></header>
-      ${guideContent(spec)}<footer class="guide-dialog__foot"><button class="btn btn--primary" data-action="close-help">${this.resumeAfterHelp ? 'Понятно, продолжить' : 'Вернуться к паузе'}</button></footer>`;
+      ${guideContent(spec)}<div class="gesture-pages"><button class="btn btn--ghost" data-gesture-scroll="up">↑ Выше</button><button class="btn btn--ghost" data-gesture-scroll="down">↓ Ниже</button></div><footer class="guide-dialog__foot"><button class="btn btn--primary" data-action="close-help">${this.resumeAfterHelp ? 'Понятно, продолжить' : 'Вернуться к паузе'}</button></footer>`;
     dialog.showModal();
     playGuideVideos(dialog);
   }
@@ -296,7 +307,7 @@ export class WorkoutScreen extends Screen {
 
     const done = spec.mode === 'hold' ? Math.floor(out.done) : out.done;
     this.setText('[data-el="done"]', String(done));
-    this.setStyle('[data-el="bar"]', 'width', `${Math.round(out.completion * 100)}%`);
+    this.setStyle('[data-el="bar"]', 'width', `${Math.round((out.remainingSec !== undefined ? 1 - out.remainingSec / (this.session.plan.durationSec ?? 75) : out.completion) * 100)}%`);
 
     const ctx = out.ctx;
     if (ctx && spec.hud) {
@@ -333,6 +344,7 @@ export class WorkoutScreen extends Screen {
       const correction = out.repEvent.corrections[0];
       const feedback = out.repEvent.feedback;
       this.feedbackText = correction?.message ?? (feedback ? `${feedback.blocksRep ? 'Не зачтено' : 'Замечание · повтор зачтён'}: ${feedback.hint}` : 'Повтор засчитан');
+      this.feedbackHighlight = expandGroups(correction ? [] : feedback?.highlight ?? []);
       this.feedbackTone = correction || !feedback ? 'success' : feedback.blocksRep ? 'error' : 'warning';
       this.feedbackUntil = t + 4200;
     }
@@ -417,7 +429,7 @@ export class WorkoutScreen extends Screen {
       return `
         <div class="stagepanel__inner">
           <h3 class="stagepanel__title">Пауза</h3>
-          <p class="stagepanel__lead">Скрести руки, чтобы продолжить.</p>
+          <p class="stagepanel__lead">Крест — продолжить. Правая рука в сторону — выбрать помощь.</p>
           <button class="btn btn--primary" data-action="resume">Продолжить</button>
           <button class="btn btn--ghost" data-action="help">▶ Как выполнять</button>
           <button class="btn btn--link" data-action="skip">Пропустить упражнение</button>
@@ -543,14 +555,14 @@ export class WorkoutScreen extends Screen {
     this.setText('[data-el="quit-label"]', 'Ещё раз?');
     if (button) {
       button.classList.add('iconbtn--asking');
-      button.setAttribute('title', 'Нажми ещё раз, чтобы завершить');
+      button.setAttribute('title', 'Подтверди ещё раз, чтобы завершить');
       window.setTimeout(() => {
         button.classList.remove('iconbtn--asking');
         this.setText('[data-el="quit-label"]', 'Завершить');
         button.setAttribute('title', 'Завершить');
       }, QUIT_CONFIRM_MS);
     }
-    this.app.coach.say('Завершить тренировку? Нажми ещё раз.', 'high');
+    this.app.coach.say('Завершить тренировку? Подтверди ещё раз.', 'high');
   }
 
   private complete(): void {
@@ -559,11 +571,12 @@ export class WorkoutScreen extends Screen {
 
     const result = this.session.finish(this.now);
     result.source = this.app.source === 'demo' ? 'simulation' : 'camera';
-    const { records } = result.source === 'simulation' ? { records: [] } : this.app.history.add(result);
+    result.model = this.measurementModels.size === 1 ? [...this.measurementModels][0] : undefined;
+    const { records, session } = result.source === 'simulation' ? { records: [], session: undefined } : this.app.history.add(result);
 
     this.app.sound.finish();
     this.app.coach.say('Тренировка завершена', 'high');
-    this.app.go({ name: 'results', result, records });
+    this.app.go({ name: 'results', result, records, savedId: session?.id });
   }
 }
 

@@ -19,6 +19,7 @@ import {
 import { exerciseGuide, exerciseMedia } from '../../exercises/guides';
 
 export class MenuScreen extends Screen {
+  override get gestureNavigation() { return { key: 'menu', defaultAction: 'workout-repair' }; }
   private get workouts() { return this.app.source === 'demo' ? WORKOUTS.filter(w => w.id === 'motion' || w.id === 'repair') : WORKOUTS; }
   private get exercises() { return this.app.source === 'demo' ? EXERCISES.slice(0, 3) : EXERCISES; }
   constructor(app: AppApi, private readonly section: 'programs' | 'exercises' = 'programs') { super(app); }
@@ -54,10 +55,10 @@ export class MenuScreen extends Screen {
             const side = w.steps.some((s) => requireExercise(s.exerciseId).view === 'side');
             return `
               <button class="card ${i === 0 ? 'card--accent' : ''}"
-                      data-action="workout-${w.id}">
+                      data-action="workout-${w.id}" data-gesture-label="${esc(w.name)}">
                 <span class="card__icon">${w.icon}</span>
                 <span class="card__name">${esc(w.name)}</span>
-                <span class="card__meta">${w.minutes} мин · ${w.steps.length} ${plural(w.steps.length, 'упражнение', 'упражнения', 'упражнений')}</span>
+                <span class="card__meta">${w.durationSec ? `${w.durationSec} секунд` : `${w.minutes} мин`} · ${w.steps.length} ${plural(w.steps.length, 'упражнение', 'упражнения', 'упражнений')}</span>
                 <span class="card__desc">${esc(w.description)}</span>
                 <span class="card__list">${esc(names)}</span>
                 ${side ? '<span class="card__badge">камера сбоку</span>' : ''}

@@ -70,6 +70,7 @@ export interface Mistake {
 
 export interface ExerciseResult {
   fixedErrors: number;
+  corrections: readonly Correction[];
   exerciseId: string;
   name: string;
   icon: string;
@@ -89,7 +90,13 @@ export interface ExerciseResult {
 
 export interface SessionResult {
   fixedErrors: number;
+  corrections: readonly Correction[];
   challenge: boolean;
+  measurementVersion: string;
+  plannedActiveMs: number;
+  activeMs: number;
+  planKey: string;
+  model?: string;
   source?: 'camera' | 'simulation';
   workoutId: string;
   workoutName: string;
@@ -356,7 +363,7 @@ export class WorkoutSession {
     this.active = {
       step,
       spec,
-      corrections: new CorrectionTracker(),
+      corrections: new CorrectionTracker(spec),
       counter: new RepCounter(spec),
       analyzer: new FormAnalyzer(spec),
       hold: new HoldTracker(),
@@ -389,6 +396,7 @@ export class WorkoutSession {
 
     this.results.push({
       fixedErrors: step.corrections.count,
+      corrections: step.corrections.confirmed,
       exerciseId: step.spec.id,
       name: step.spec.name,
       icon: step.spec.icon,
@@ -598,8 +606,14 @@ export class WorkoutSession {
       }
     }
 
+    const corrections = [...new Map(this.results.flatMap(result => result.corrections).map(c => [c.ruleId, c])).values()];
     return {
-      fixedErrors: this.results.reduce((sum, result) => sum + result.fixedErrors, 0),
+      fixedErrors: corrections.length,
+      corrections,
+      measurementVersion: 'motion-rules-2',
+      plannedActiveMs: (this.plan.durationSec ?? 0) * 1000,
+      activeMs: Math.min(this.activeMs, (this.plan.durationSec ?? Infinity) * 1000),
+      planKey: JSON.stringify(this.plan.steps),
       challenge: !!this.plan.durationSec,
       workoutId: this.plan.id,
       workoutName: this.plan.name,

@@ -7,8 +7,7 @@
  *    а не ошибка человека. Подсказка появляется только если нарушение держится
  *    debounceMs (по умолчанию 260 мс).
  * 2. Спам. Одновременно могут нарушаться три правила. Показываем одну подсказку
- *    — с наибольшим приоритетом, — но подсвечиваем красным все проблемные части
- *    тела: читать одно, видеть всё.
+ *    — с наибольшим приоритетом — и подсвечиваем относящиеся к ней суставы.
  * 3. Повторы. Одна и та же фраза, произнесённая пять раз за десять секунд,
  *    бесполезна. У каждого правила свой кулдаун на озвучку.
  */
@@ -46,7 +45,7 @@ export interface CoachMessage {
 export interface FrameVerdict {
   /** Единственная подсказка для показа. */
   message: CoachMessage | null;
-  /** Точки для красной подсветки — по всем активным нарушениям. */
+  /** Точки для красной подсветки — по выбранной подсказке. */
   highlight: Set<LandmarkName>;
   /** Хотя бы одно активное нарушение блокирует зачёт повторения. */
   blocked: boolean;
@@ -106,13 +105,8 @@ export class FormAnalyzer {
       return b.heldMs - a.heldMs;
     });
 
-    const highlight = new Set<LandmarkName>();
-    for (const c of candidates) {
-      const groups = c.v.highlight ?? c.rule.highlight;
-      if (groups) for (const n of expandGroups(groups)) highlight.add(n);
-    }
-
     const top = candidates[0]!;
+    const highlight = expandGroups(top.v.highlight ?? top.rule.highlight ?? []);
     const st = this.stateOf(top.rule.id);
     const speak = top.rule.severity === 'error' && ctx.t - st.lastSpokeAt >= SPEAK_COOLDOWN_MS;
     if (speak) {
@@ -156,7 +150,8 @@ export class FormAnalyzer {
         ruleId: rule.id,
         title: rule.title,
         severity: rule.severity,
-        hint: v.hint,
+        ...v,
+        highlight: v.highlight ?? rule.highlight,
         blocksRep: rule.blocksRep === true,
       });
     }
@@ -169,6 +164,7 @@ export class FormAnalyzer {
         title: rule.title,
         severity: rule.severity,
         hint: this.stateOf(rule.id).lastHint,
+        highlight: rule.highlight,
         blocksRep: rule.blocksRep === true,
       });
     }
