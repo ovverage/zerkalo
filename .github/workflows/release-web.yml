@@ -1,0 +1,32 @@
+# Upload only the audited static ZIP to the already prepared release.
+name: Package approved web release
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run package:web
+      - name: Attach archive to the configured release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=$(node --input-type=module -e "import fs from 'node:fs'; const r=JSON.parse(fs.readFileSync('scripts/android-release.json','utf8')); if(!/^\d+\.\d+\.\d+$/.test(r.version)) process.exit(1); console.log('v'+r.version)")
+          gh release upload "$TAG" release/zerkalo-web.zip --repo "$GITHUB_REPOSITORY"
