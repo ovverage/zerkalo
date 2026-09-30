@@ -343,7 +343,7 @@ export class WorkoutScreen extends Screen {
     if (out.repEvent) {
       const correction = out.repEvent.corrections[0];
       const feedback = out.repEvent.feedback;
-      this.feedbackText = correction?.message ?? (feedback ? `${feedback.blocksRep ? 'Не зачтено' : 'Замечание · повтор зачтён'}: ${feedback.hint}` : 'Повтор засчитан');
+      this.feedbackText = correction?.message ?? (feedback ? `${feedback.blocksRep ? 'Не зачтено' : 'Замечание · повтор зачтён'}: ${feedback.hint.replace(/^(?:Не зачтено|Присед не зачтён):\s*/i, '')}` : 'Повтор засчитан');
       this.feedbackHighlight = expandGroups(correction ? [] : feedback?.highlight ?? []);
       this.feedbackTone = correction || !feedback ? 'success' : feedback.blocksRep ? 'error' : 'warning';
       this.feedbackUntil = t + 4200;
